@@ -8,7 +8,7 @@ using namespace std;
 
 class Lz77 : public Compressor {
 private:
-    int bufferSize = 255;
+    int bufferSize = 65535;
     int lookaheadSize = 255;
 public:
     Lz77() {}
@@ -20,7 +20,8 @@ public:
         tuple<int, int, char> occurrence;
         while (i < strSize) {
             occurrence = patternMatch(str, strSize, i, bufferSize, lookaheadSize);
-            encoded.push_back(get<0>(occurrence));
+            encoded.push_back((get<0>(occurrence) & 0xFF00) >> 8);
+            encoded.push_back((get<0>(occurrence) & 0x00FF));
             encoded.push_back(get<1>(occurrence));
             encoded.push_back(get<2>(occurrence));
             i += get<1>(occurrence) + 1;
@@ -33,16 +34,16 @@ public:
         vector<char> decoded;
 
         int pos = 0;
-        for (int i = 0; i < encodedSize; i += 3) {
-            int size = (unsigned char) encoded[i + 1];
-            int st = pos - (unsigned char) encoded[i];
+        for (int i = 0; i < encodedSize; i += 4) {
+            int size = (unsigned char) encoded[i + 2];
+            int st = pos - (unsigned char) encoded[i+1] - ((unsigned char) encoded[i] << 8);
             int en = st + size;
 
             for (int j = st; j < en; j++) {
                 decoded.push_back(decoded[j]);
             }
 
-            decoded.push_back(encoded[i + 2]);
+            decoded.push_back(encoded[i + 3]);
             pos += size + 1;
         }
 
