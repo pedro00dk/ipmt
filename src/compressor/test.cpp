@@ -51,7 +51,6 @@ int main() {
     encoded = compressor->encode(&inputVector[0], inputVector.size());
     decoded = compressor->decode(&encoded[0], encoded.size());
 
-
     assert(inputVector.size() == decoded.size());
     for (int i = 0; i < decoded.size(); i++) assert(inputVector[i] == decoded[i]);
     writeBytes("out.txt", encoded);
