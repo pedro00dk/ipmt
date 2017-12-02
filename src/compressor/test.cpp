@@ -1,3 +1,4 @@
+#include <ctime>
 #include <tuple>
 #include <iostream>
 #include <fstream>
@@ -44,6 +45,7 @@ int main() {
 
     cin >> input;
 
+    int t0 = time(NULL);
     vector<char> inputVector;
     //inputVector = vector<char>(input.begin(), input.end());
     inputVector = readBytes(input);
@@ -51,10 +53,13 @@ int main() {
     encoded = compressor->encode(&inputVector[0], inputVector.size());
     decoded = compressor->decode(&encoded[0], encoded.size());
 
-
     assert(inputVector.size() == decoded.size());
     for (int i = 0; i < decoded.size(); i++) assert(inputVector[i] == decoded[i]);
     writeBytes("out.txt", encoded);
+
+    int t1 = time(NULL);
+    printf("encoded size:%d decoded size:%d compression:%lf\n", encoded.size(),decoded.size(), double(encoded.size())/decoded.size());
+    printf ("time = %d secs\n", t1 - t0);
 
     return 0;
 }
