@@ -16,7 +16,7 @@ public:
         return readBytes(ifs);
     }
 
-    static vector<char> readBytes(ifstream ifs) {
+    static vector<char> readBytes(ifstream &ifs) {
         ifstream::pos_type pos = ifs.tellg();
 
         std::vector<char> result(pos);
