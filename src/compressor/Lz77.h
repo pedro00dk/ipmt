@@ -11,8 +11,8 @@ using namespace std;
 
 class Lz77 : public Compressor {
 private:
-    int bufferSize = 65535;
-    int lookaheadSize = 255;
+    int bufferMaxSize = 4095;
+    int lookaheadMaxSize = 15;
 public:
     Lz77() {}
 
@@ -24,11 +24,15 @@ public:
         while (i < strSize) {
 //            occurrence = patternMatch(str, strSize, i);
             occurrence = prefixMatch(str, strSize, i);
-            printf("(%d,%d,%c)\n", get<0>(occurrence), get<1>(occurrence), get<2>(occurrence));
-            encoded.push_back((get<0>(occurrence) & 0xFF00) >> 8);
-            encoded.push_back((get<0>(occurrence) & 0x00FF));
-            encoded.push_back(get<1>(occurrence));
-            encoded.push_back(get<2>(occurrence));
+            int matchPos = get<0>(occurrence);
+            int matchSize = get<1>(occurrence);
+            char firstByte = (char) (matchPos >> 4);
+            char secondByte = (char) ((((0x000F & matchPos) << 4)) | matchSize);
+
+            encoded.push_back(firstByte);
+            encoded.push_back(secondByte);
+            encoded.push_back((char) get<2>(occurrence));
+
             i += get<1>(occurrence) + 1;
         }
 
@@ -39,16 +43,19 @@ public:
         vector<char> decoded;
 
         int pos = 0;
-        for (int i = 0; i < encodedSize; i += 4) {
-            int size = (unsigned char) encoded[i + 2];
-            int st = pos - (unsigned char) encoded[i + 1] - ((unsigned char) encoded[i] << 8);
+        for (int i = 0; i < encodedSize; i += 3) {
+            int firstByte = (unsigned char) encoded[i];
+            int secondByte = (unsigned char) encoded[i + 1];
+
+            int size = (unsigned char) secondByte & 0x000F;
+            int st = pos - (((unsigned char) firstByte << 4) | ((unsigned char) secondByte >> 4));
             int en = st + size;
 
             for (int j = st; j < en; j++) {
                 decoded.push_back(decoded[j]);
             }
 
-            decoded.push_back(encoded[i + 3]);
+            decoded.push_back(encoded[i + 2]);
             pos += size + 1;
         }
 
@@ -57,12 +64,13 @@ public:
 
 private:
     tuple<int, int, char> patternMatch(char *str, int strSize, int lookStart) {
-        int lookEnd = min(strSize - 1, lookStart + lookaheadSize);
-        int bufferStart = max(0, lookStart - bufferSize);
+        int lookEnd = min(strSize - 1, lookStart + lookaheadMaxSize);
+//        int lookEnd = min(int(strSize - 1), lookStart + lookSize); // pq o cast muda o tamanho da compressao?
+        int bufferStart = max(0, lookStart - bufferMaxSize);
         int bufferEnd = lookStart;
 
-        bufferSize = bufferEnd - bufferStart;
-        lookaheadSize = lookEnd - lookStart;
+        int bufferSize = bufferEnd - bufferStart;
+        int lookaheadSize = lookEnd - lookStart;
 
         int biggestMatchSize = 0;
         int biggestMatchPos = lookStart;
@@ -75,18 +83,22 @@ private:
                 biggestMatchSize = size;
                 biggestMatchPos = i;
             }
+
+            if (size == lookaheadSize) {
+                break;
+            }
         }
 
         return make_tuple(bufferSize - biggestMatchPos, biggestMatchSize, str[lookStart + biggestMatchSize]);
     }
 
     tuple<int, int, char> prefixMatch(char *str, int strSize, int lookStart) {
-        int lookEnd = min(strSize - 1, lookStart + lookaheadSize);
-        int bufferStart = max(0, lookStart - bufferSize);
+        int lookEnd = min(strSize - 1, lookStart + lookaheadMaxSize);
+        int bufferStart = max(0, lookStart - bufferMaxSize);
         int bufferEnd = lookStart;
 
-        bufferSize = bufferEnd - bufferStart;
-        lookaheadSize = lookEnd - lookStart;
+        int bufferSize = bufferEnd - bufferStart;
+        int lookaheadSize = lookEnd - lookStart;
 
         vector<vector<int>> fsm = build_fsm(str, strSize, lookStart);
         int fsmPos = 0;

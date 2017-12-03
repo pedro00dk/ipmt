@@ -2,11 +2,12 @@
 #include "cli/Cli.h"
 #include "compressor/Compressor.h"
 #include "compressor/Lz77.h"
+#include "operation/IndexMode.h"
+#include "operation/SearchMode.h"
 
 using namespace std;
 
 int main(int argc, char **argv) {
-
     CliOptions options = parseCommand(argc, argv);
 
     Compressor *compressor = nullptr;
@@ -25,9 +26,9 @@ int main(int argc, char **argv) {
         }
 
         if (options.isIndex) {
-
+            IndexMode::index(file, inputFileStream, *compressor);
         } else if (options.isSearch) {
-//            matcher->searchPatterns(file, inputFileStream, options.count, !options.count);
+            SearchMode::searchPatterns(inputFileStream, options.patterns, options.count, !options.count);
         }
     }
 }
