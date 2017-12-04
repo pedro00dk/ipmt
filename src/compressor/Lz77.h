@@ -27,7 +27,6 @@ public:
         while (i < strSize) {
             occurrence = patternMatch(str, strSize, i);
 //            occurrence = prefixMatch(str, strSize, i);
-            //TODO: pq tem uma diferença de bytes dependendo do search?
             int matchPos = get<0>(occurrence);
             int matchSize = get<1>(occurrence);
             char firstByte = (char) (matchPos >> 4);
@@ -125,7 +124,7 @@ private:
 
 public:
     vector<vector<int>> build_fsm(const char *str, int strSize, int startPos = 0) {
-        for (int c = 0; c < ALPHABET_SIZE; c++) {
+        for (int c = 0; c <= ALPHABET_SIZE; c++) {
             fsm[0][c] = 0;
         }
 
@@ -134,7 +133,7 @@ public:
         int border = 0;
         int lim = min(strSize - startPos, lookaheadMaxSize);
         for (int i = 1; i < lim; i++) {
-            for (int c = 0; c < ALPHABET_SIZE; c++) {
+            for (int c = 0; c <= ALPHABET_SIZE; c++) {
                 fsm[i][c] = fsm[border][c];
             }
 
@@ -147,7 +146,7 @@ public:
 
     void initFsm() {
         for (int i = 0; i < lookaheadMaxSize; i++) {
-            fsm.push_back(vector<int>(ALPHABET_SIZE));
+            fsm.push_back(vector<int>(ALPHABET_SIZE + 1));
         }
     }
 };
