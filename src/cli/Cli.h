@@ -34,7 +34,7 @@ static const string searchOperation = "search";
 
 // Options arguments
 static const vector<string> compressionAlgorithmArguments = {"lz77"};
-static const vector<string> indexAlgorithmArguments = {"suffixtree"};
+static const vector<string> indexAlgorithmArguments = {"suffixarray"};
 
 // Help message
 static const string help =
@@ -61,7 +61,7 @@ static const string help =
                 "\tlz77\n"
                 "-i,--indextype <arg>       Specify the indexing algorithm\n"
                 "arg options:\n"
-                "\tsuffixtree\n"
+                "\tsuffixarray\n"
                 "\n";
 
 bool isInVector(const string &text, vector<string> vector) {
@@ -157,7 +157,7 @@ CliOptions parseCommand(int argc, char **argv) {
     }
 
     if (options.indexAlgorithm.empty()) {
-        options.indexAlgorithm = "suffixtree";
+        options.indexAlgorithm = "suffixarray";
     }
 
     return options;
