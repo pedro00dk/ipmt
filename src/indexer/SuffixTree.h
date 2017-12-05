@@ -9,14 +9,14 @@ public:
     int id;
 
     int leftPos, rightPos;
-    map<unsigned char, Node *> children;
+    map<char, Node *> children;
     Node *slink;
 
     Node(int id, int leftPos, int rightPos) :
             id(id),
             leftPos(leftPos),
             rightPos(rightPos),
-            children(map<unsigned char, Node *>()),
+            children(map<char, Node *>()),
             slink(nullptr) {}
 };
 
@@ -49,7 +49,9 @@ public:
     }
 
     vector<char> getIndexBytes() override {
-        return vector<char>();
+        vector<char> bytes;
+        posOrderNodeSerialize(root, bytes);
+        return bytes;
     }
 
     void rebuildIndexFromBytes(const vector<char> &indexBytes) override {
@@ -111,5 +113,34 @@ private:
         current->children[str[leftPos]] = newChild;
         newChild->children[str[child->leftPos]] = child;
         return {false, newChild};
+    }
+
+    void posOrderNodeSerialize(Node *node, vector<char> &bytes) {
+        if (!node->children.empty()) {
+            map<char, Node *>::iterator itr = node->children.begin();
+            map<char, Node *>::iterator end = node->children.end();
+            while (itr != end) {
+                posOrderNodeSerialize(itr->second, bytes);
+                ++itr;
+            }
+        }
+
+        string header = to_string(node->id) + "," +
+                        to_string(node->leftPos) + "," +
+                        to_string(node->rightPos == LONG_MAX ? -1 : node->rightPos) +
+                        "\n";
+        bytes.insert(end(bytes), begin(header), end(header));
+
+        string slink = to_string(node->slink != nullptr ? node->slink->id : -1) + "\n";
+        bytes.insert(end(bytes), begin(slink), end(slink));
+
+        map<char, Node *>::iterator itr = node->children.begin();
+        map<char, Node *>::iterator end = node->children.end();
+        while (itr != end) {
+            string childInfo = to_string(itr->first) + "," + to_string(itr->second->id) + "\n";
+            std::copy(childInfo.begin(), childInfo.end(), back_inserter(bytes));
+            ++itr;
+        }
+        bytes.push_back('\n');
     }
 };
