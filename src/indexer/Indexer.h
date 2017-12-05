@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <tuple>
+#include <climits>
 #include <string>
 #include <vector>
 
