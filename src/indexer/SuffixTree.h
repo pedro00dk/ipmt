@@ -131,9 +131,6 @@ private:
                         "\n";
         bytes.insert(end(bytes), begin(header), end(header));
 
-        string slink = to_string(node->slink != nullptr ? node->slink->id : -1) + "\n";
-        bytes.insert(end(bytes), begin(slink), end(slink));
-
         map<char, Node *>::iterator itr = node->children.begin();
         map<char, Node *>::iterator end = node->children.end();
         while (itr != end) {
