@@ -29,12 +29,12 @@ public:
     Node *root;
 
     SuffixTree() :
-            nodeIdGenerator(-1),
+            nodeIdGenerator(0),
             grnd(nullptr),
             root(nullptr) {}
 
     void buildIndex(char *str, int strSize) override {
-        nodeIdGenerator = -1;
+        nodeIdGenerator = 0;
         grnd = new Node(nodeIdGenerator++, -1, -1);
         root = new Node(nodeIdGenerator++, -1, 0);
         for (int i = 0; i < ISO_SIZE; i++)
@@ -42,8 +42,10 @@ public:
         root->slink = grnd;
 
         NodeData starter = {root, 0, 0};
-        for (long i = 0; i < strSize; i++)
-            starter = canonise(update(starter, str, i), str);
+        for (long i = 0; i < strSize; i++) {
+            starter = update(starter, str, i);
+            starter = canonise({get<0>(starter), get<1>(starter), get<2>(starter) + 1}, str);
+        }
     }
 
     vector<char> getIndexBytes() override {
