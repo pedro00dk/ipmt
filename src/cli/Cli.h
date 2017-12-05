@@ -34,7 +34,7 @@ static const string searchOperation = "search";
 
 // Options arguments
 static const vector<string> compressionAlgorithmArguments = {"lz77", "lz78"};
-static const vector<string> indexAlgorithmArguments = {"suffixtree", "suffixarray"};
+static const vector<string> indexAlgorithmArguments = {"suffixtree", "suffixarray", "uncompressed"};
 
 // Help message
 static const string help =
@@ -63,7 +63,7 @@ static const string help =
                 "\tlz77\n"
                 "-i,--indextype <arg>       Specify the indexing algorithm\n"
                 "arg options:\n"
-                "\tsuffixtree, suffixarray\n"
+                "\tsuffixtree, suffixarray, uncompressed\n"
                 "\n";
 
 bool isInVector(const string &text, vector<string> vector) {
