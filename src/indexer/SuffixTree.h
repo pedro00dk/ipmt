@@ -30,12 +30,16 @@ public:
     Node *grnd;
     Node *root;
 
+    vector<char> chars;
+
     SuffixTree() :
             nodeIdGenerator(0),
             grnd(nullptr),
-            root(nullptr) {}
+            root(nullptr),
+            chars(vector<char>()) {}
 
     void buildIndex(const vector<char> &chars) override {
+        this->chars = chars;
         nodeIdGenerator = 0;
         grnd = new Node(nodeIdGenerator++, -1, -1);
         root = new Node(nodeIdGenerator++, -1, 0);
@@ -56,7 +60,10 @@ public:
 
     vector<char> serialize() override {
         vector<char> bytes;
-        posOrderNodeSerialize(root, bytes);
+        serializeNodes(root, bytes);
+        bytes.push_back('=');
+        bytes.push_back('\n');
+        copy(chars.begin(), chars.end(), back_inserter(bytes));
         return bytes;
     }
 
@@ -70,6 +77,9 @@ public:
         Node *currentNode = nullptr; // the root node is the last to be added (post order in serialize)
         for (string line; getline(stream, line);) {
             if (inHeader) {
+                if (line.size() == 1) {
+                    break;
+                }
                 long long idEnd = line.find(';');
                 long long lrSplit = line.find(',');
 
@@ -94,6 +104,10 @@ public:
                 currentNode->children[ch] = nodes[childId];
             }
         }
+        stream >> std::noskipws;
+        chars = vector<char>();
+        chars = vector<char>((istreambuf_iterator<char>(stream)), istreambuf_iterator<char>());
+
         nodeIdGenerator = nodes.size();
         grnd = new Node(0, -1, -1);
         root = currentNode;
@@ -154,12 +168,12 @@ private:
         return {false, newChild};
     }
 
-    void posOrderNodeSerialize(Node *node, vector<char> &bytes) {
+    void serializeNodes(Node *node, vector<char> &bytes) {
         if (!node->children.empty()) {
             map<char, Node *>::iterator itr = node->children.begin();
             map<char, Node *>::iterator end = node->children.end();
             while (itr != end) {
-                posOrderNodeSerialize(itr->second, bytes);
+                serializeNodes(itr->second, bytes);
                 ++itr;
             }
         }
@@ -174,7 +188,7 @@ private:
         map<char, Node *>::iterator end = node->children.end();
         while (itr != end) {
             string childInfo = to_string(itr->first) + "," + to_string(itr->second->id) + "\n";
-            std::copy(childInfo.begin(), childInfo.end(), back_inserter(bytes));
+            copy(childInfo.begin(), childInfo.end(), back_inserter(bytes));
             ++itr;
         }
         bytes.push_back('\n');
