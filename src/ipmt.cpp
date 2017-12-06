@@ -2,33 +2,53 @@
 #include "cli/Cli.h"
 #include "compressor/Compressor.h"
 #include "compressor/Lz77.h"
-#include "operation/IndexMode.h"
-#include "operation/SearchMode.h"
+#include "indexer/Indexer.h"
+#include "indexer/SuffixTree.h"
+#include "util/FileUtils.h"
 
 using namespace std;
 
 int main(int argc, char **argv) {
     CliOptions options = parseCommand(argc, argv);
 
+    Indexer *indexer = nullptr;
+    if (options.indexAlgorithm == "suffixtree") indexer = new SuffixTree();
+    else {
+        cerr << "ERR: indexer not implemented" << endl;
+        exit(1);
+    }
+
     Compressor *compressor = nullptr;
     if (options.compressionAlgorithm == "lz77") compressor = new Lz77();
+    else if (options.compressionAlgorithm == "uncompressed") compressor = nullptr;
     else {
-        cerr << "ERR: matcher not implemented" << endl;
+        cerr << "ERR: compressor not implemented" << endl;
         exit(1);
     }
 
     // Processing files
-    for (auto &file : options.files) {
-        ifstream inputFileStream(file);
-        if (!inputFileStream.is_open()) {
+    for (string &file : options.files) {
+        ifstream fileStream(file);
+        if (!fileStream.is_open()) {
             cerr << "ERR: can not open file " << file << endl;
             continue;
         }
 
         if (options.isIndex) {
-            IndexMode::index(file, inputFileStream, *compressor);
+            vector<char> fileBytes = FileUtils::readBytes(fileStream);
+            cout << "file bytes:" << fileBytes.size() << endl;
+            indexer->buildIndex(&fileBytes[0], fileBytes.size());
+            vector<char> indexBytes = indexer->getIndexBytes();
+            string indexFile = file + ".idx";
+            ofstream fileOutStream = ofstream(indexFile);
+            if (compressor != nullptr) {
+                vector<char> encodedIndexBytes = compressor->encode(&indexBytes[0], indexBytes.size());
+                FileUtils::writeBytes(fileOutStream, encodedIndexBytes);
+            } else {
+                FileUtils::writeBytes(fileOutStream, indexBytes);
+            }
         } else if (options.isSearch) {
-            SearchMode::searchPatterns(inputFileStream, options.patterns, options.count, !options.count);
+            // SearchMode
         }
     }
 }
