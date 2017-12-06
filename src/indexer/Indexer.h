@@ -4,15 +4,18 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 #define ISO_SIZE 256
+
+using namespace std;
 
 class Indexer {
 
 public:
-    virtual void buildIndex(char* str, int strSize) = 0;
-    virtual vector<char> getIndexBytes() = 0;
-    virtual void rebuildIndexFromBytes(const vector<char> &indexBytes) = 0;
+    virtual void buildIndex(const vector<char> &chars) = 0;
+
     virtual void search(const vector<string> &patterns, bool count, bool print) = 0;
+
+    virtual vector<char> serialize() = 0;
+
+    virtual void deserialize(const vector<char> &bytes) = 0;
 };
