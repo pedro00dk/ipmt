@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
         if (options.isIndex) {
             vector<char> fileBytes = FileUtils::readBytes(fileStream);
             cout << "file bytes:" << fileBytes.size() << endl;
-            indexer->buildIndex(&fileBytes[0], fileBytes.size());
-            vector<char> indexBytes = indexer->getIndexBytes();
+            indexer->buildIndex(fileBytes);
+            vector<char> indexBytes = indexer->serialize();
             string indexFile = file + ".idx";
             ofstream fileOutStream = ofstream(indexFile);
             if (compressor != nullptr) {
