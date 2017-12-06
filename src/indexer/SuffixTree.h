@@ -8,12 +8,12 @@
 class Node {
 
 public:
-    long long id;
-    long long leftPos, rightPos;
+    int id;
+    int leftPos, rightPos;
     map<char, Node *> children{};
     Node *slink;
 
-    Node(long long id, long long leftPos, long long rightPos) :
+    Node(int id, int leftPos, int rightPos) :
             id(id),
             leftPos(leftPos),
             rightPos(rightPos),
@@ -22,11 +22,11 @@ public:
 
 };
 
-typedef tuple<Node *, long long, long long> NodeData;
+typedef tuple<Node *, int, int> NodeData;
 
 class SuffixTree : public Indexer {
 public:
-    long long nodeIdGenerator;
+    int nodeIdGenerator;
     Node *grnd;
     Node *root;
 
@@ -39,23 +39,62 @@ public:
             chars(vector<char>()) {}
 
     void buildIndex(const vector<char> &chars) override {
-        this->chars = chars;
         nodeIdGenerator = 0;
         grnd = new Node(nodeIdGenerator++, -1, -1);
         root = new Node(nodeIdGenerator++, -1, 0);
+        this->chars = chars;
 
-        for (long long i = 0; i < ISO_SIZE; i++)
+        for (int i = 0; i < ISO_SIZE; i++)
             grnd->children[i] = root;
         root->slink = grnd;
 
         NodeData starter = {root, 0, 0};
-        for (long long i = 0; i < chars.size(); i++) {
+        for (int i = 0; i < chars.size(); i++) {
             starter = update(starter, chars, i);
             starter = canonise({get<0>(starter), get<1>(starter), get<2>(starter) + 1}, chars);
         }
     }
 
     void search(const vector<string> &patterns, bool count, bool print) {
+
+        string pattern = patterns[0];
+        int patternSize = patterns[0].size();
+
+        int patternCursor = 0;
+        Node *nodeCursor = root;
+
+        bool patternNotExists = false;
+
+        while (!patternNotExists) {
+
+            for (
+                    int i = max(nodeCursor->leftPos, 0);
+                    patternCursor < patternSize && i < min(nodeCursor->rightPos, (int) chars.size());
+                    i++) {
+
+                if (chars[i] == pattern[patternCursor]) patternCursor++;
+                else {
+                    patternNotExists = true;
+                    break;
+                }
+            }
+
+            if (patternCursor == patternSize) {
+                // count leafs
+                break;
+            }
+
+            if (!patternNotExists) {
+                if (nodeCursor->children.count(pattern[patternCursor]) != 0)
+                    nodeCursor = nodeCursor->children[pattern[patternCursor]];
+                else patternNotExists = true;
+            }
+
+            if (patternNotExists) {
+                cout << "pattern " << pattern << " not found" << endl;
+                break;
+            }
+        }
     }
 
     vector<char> serialize() override {
@@ -71,7 +110,7 @@ public:
         stringstream stream;
         stream.write(&bytes[0], bytes.size());
 
-        std::map<long long, Node *> nodes;
+        std::map<int, Node *> nodes;
 
         bool inHeader = true;
         Node *currentNode = nullptr; // the root node is the last to be added (post order in serialize)
@@ -80,13 +119,13 @@ public:
                 if (line.size() == 1) {
                     break;
                 }
-                long long idEnd = line.find(';');
-                long long lrSplit = line.find(',');
+                int idEnd = line.find(';');
+                int lrSplit = line.find(',');
 
-                long long id = stoll(line.substr(0, idEnd));
-                long long leftPos = stoll(line.substr(idEnd + 1, lrSplit - (idEnd + 1)));
-                long long rightPos = stoll(line.substr(lrSplit + 1, line.size()));
-                rightPos = rightPos == -1 ? LONG_LONG_MAX : rightPos;
+                int id = stoll(line.substr(0, idEnd));
+                int leftPos = stoll(line.substr(idEnd + 1, lrSplit - (idEnd + 1)));
+                int rightPos = stoll(line.substr(lrSplit + 1, line.size()));
+                rightPos = rightPos == -1 ? INT_MAX : rightPos;
 
                 currentNode = new Node(id, leftPos, rightPos);
                 nodes[id] = currentNode;
@@ -96,10 +135,10 @@ public:
                     inHeader = true;
                     continue;
                 }
-                long long chIdSplit = line.find(',');
+                int chIdSplit = line.find(',');
 
                 char ch = (char) stoi(line.substr(0, chIdSplit));
-                long long childId = stoll(line.substr(chIdSplit + 1, line.size()));
+                int childId = stoll(line.substr(chIdSplit + 1, line.size()));
 
                 currentNode->children[ch] = nodes[childId];
             }
@@ -111,18 +150,18 @@ public:
         nodeIdGenerator = nodes.size();
         grnd = new Node(0, -1, -1);
         root = currentNode;
-        for (long long i = 0; i < ISO_SIZE; i++)
+        for (int i = 0; i < ISO_SIZE; i++)
             grnd->children[i] = root;
     }
 
 private:
-    NodeData update(NodeData nodeData, const vector<char> &chars, long long i) {
+    NodeData update(NodeData nodeData, const vector<char> &chars, int i) {
         Node *previousChild = nullptr;
         tuple<bool, Node *> isTerm_child = testSplit(nodeData, chars, i);
         bool isTerm = get<0>(isTerm_child);
         Node *child = get<1>(isTerm_child);
         while (!isTerm) {
-            Node *leaf = new Node(nodeIdGenerator++, i, LONG_LONG_MAX);
+            Node *leaf = new Node(nodeIdGenerator++, i, INT_MAX);
             child->children[chars[i]] = leaf;
             if (previousChild != nullptr) previousChild->slink = child;
             previousChild = child;
@@ -138,8 +177,8 @@ private:
     }
 
     NodeData canonise(NodeData nodeData, const vector<char> &chars) {
-        long long leftPos = get<1>(nodeData);
-        long long rightPos = get<2>(nodeData);
+        int leftPos = get<1>(nodeData);
+        int rightPos = get<2>(nodeData);
         if (leftPos >= rightPos) return nodeData;
 
         Node *current = get<0>(nodeData);
@@ -152,9 +191,9 @@ private:
         return {current, leftPos, rightPos};
     }
 
-    tuple<bool, Node *> testSplit(NodeData nodeData, const vector<char> &chars, long long i) {
-        long long leftPos = get<1>(nodeData);
-        long long rightPos = get<2>(nodeData);
+    tuple<bool, Node *> testSplit(NodeData nodeData, const vector<char> &chars, int i) {
+        int leftPos = get<1>(nodeData);
+        int rightPos = get<2>(nodeData);
         Node *current = get<0>(nodeData);
         if (leftPos >= rightPos) return {current->children.count(chars[i]) != 0, current};
 
@@ -180,7 +219,7 @@ private:
 
         string header = to_string(node->id) + ";" +
                         to_string(node->leftPos) + "," +
-                        to_string(node->rightPos == LONG_LONG_MAX ? -1 : node->rightPos) +
+                        to_string(node->rightPos == INT_MAX ? -1 : node->rightPos) +
                         "\n";
         bytes.insert(end(bytes), begin(header), end(header));
 
