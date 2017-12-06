@@ -48,7 +48,15 @@ int main(int argc, char **argv) {
                 FileUtils::writeBytes(fileOutStream, indexBytes);
             }
         } else if (options.isSearch) {
-            // SearchMode
+            vector<char> fileBytes = FileUtils::readBytes(fileStream);
+            vector<char> indexBytes;
+            if (compressor != nullptr) {
+                indexBytes = compressor->decode(&fileBytes[0], fileBytes.size());
+            } else {
+                indexBytes = fileBytes;
+            }
+            indexer->deserialize(indexBytes);
+            indexer->search(options.patterns, options.count, !options.count);
         }
     }
 }

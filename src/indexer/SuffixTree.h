@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <sstream>
 #include "Indexer.h"
 
 
@@ -60,6 +61,44 @@ public:
     }
 
     void deserialize(const vector<char> &bytes) override {
+        stringstream stream;
+        stream.write(&bytes[0], bytes.size());
+
+        std::map<long long, Node *> nodes;
+
+        bool inHeader = true;
+        Node *currentNode = nullptr; // the root node is the last to be added (post order in serialize)
+        for (string line; getline(stream, line);) {
+            if (inHeader) {
+                long long idEnd = line.find(';');
+                long long lrSplit = line.find(',');
+
+                long long id = stoll(line.substr(0, idEnd));
+                long long leftPos = stoll(line.substr(idEnd + 1, lrSplit - (idEnd + 1)));
+                long long rightPos = stoll(line.substr(lrSplit + 1, line.size()));
+                rightPos = rightPos == -1 ? LONG_LONG_MAX : rightPos;
+
+                currentNode = new Node(id, leftPos, rightPos);
+                nodes[id] = currentNode;
+                inHeader = false;
+            } else {
+                if (line.size() == 0) {
+                    inHeader = true;
+                    continue;
+                }
+                long long chIdSplit = line.find(',');
+
+                char ch = (char) stoi(line.substr(0, chIdSplit));
+                long long childId = stoll(line.substr(chIdSplit + 1, line.size()));
+
+                currentNode->children[ch] = nodes[childId];
+            }
+        }
+        nodeIdGenerator = nodes.size();
+        grnd = new Node(0, -1, -1);
+        root = currentNode;
+        for (long long i = 0; i < ISO_SIZE; i++)
+            grnd->children[i] = root;
     }
 
 private:
@@ -125,7 +164,7 @@ private:
             }
         }
 
-        string header = to_string(node->id) + "," +
+        string header = to_string(node->id) + ";" +
                         to_string(node->leftPos) + "," +
                         to_string(node->rightPos == LONG_LONG_MAX ? -1 : node->rightPos) +
                         "\n";
