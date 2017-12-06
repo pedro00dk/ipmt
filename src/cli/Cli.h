@@ -33,8 +33,8 @@ static const string indexOperation = "index";
 static const string searchOperation = "search";
 
 // Options arguments
-static const vector<string> compressionAlgorithmArguments = {"lz77", "lz78"};
-static const vector<string> indexAlgorithmArguments = {"suffixtree", "suffixarray", "uncompressed"};
+static const vector<string> compressionAlgorithmArguments = {"lz77", "lz78", "uncompressed"};
+static const vector<string> indexAlgorithmArguments = {"suffixtree", "suffixarray"};
 
 // Help message
 static const string help =
