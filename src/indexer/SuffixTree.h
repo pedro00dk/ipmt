@@ -53,6 +53,7 @@ public:
             starter = update(starter, chars, i);
             starter = canonise({get<0>(starter), get<1>(starter), get<2>(starter) + 1}, chars);
         }
+        root->leftPos = 0;
     }
 
     void search(const vector<string> &patterns, bool count, bool print) {
@@ -65,33 +66,36 @@ public:
 
         bool patternNotExists = false;
 
+        int positionDelta = 0;
         while (!patternNotExists) {
-
             for (
-                    int i = max(nodeCursor->leftPos, 0);
+                    int i = nodeCursor->leftPos;
                     patternCursor < patternSize && i < min(nodeCursor->rightPos, (int) chars.size());
                     i++) {
 
-                if (chars[i] == pattern[patternCursor]) patternCursor++;
-                else {
+                if (chars[i] == pattern[patternCursor]) {
+                    patternCursor++;
+                } else {
                     patternNotExists = true;
                     break;
                 }
             }
 
             if (patternCursor == patternSize) {
-                // count leafs
+                int occurrences = countPrintLeafs(nodeCursor, pattern, print, positionDelta);
+                if (count) cout << pattern << ": " << occurrences << endl;
                 break;
             }
 
             if (!patternNotExists) {
-                if (nodeCursor->children.count(pattern[patternCursor]) != 0)
+                if (nodeCursor->children.count(pattern[patternCursor]) != 0) {
+                    positionDelta += nodeCursor->rightPos - nodeCursor->leftPos;
                     nodeCursor = nodeCursor->children[pattern[patternCursor]];
-                else patternNotExists = true;
+                } else patternNotExists = true;
             }
 
             if (patternNotExists) {
-                cout << "pattern " << pattern << " not found" << endl;
+                if (count) cout << pattern << ": 0" << endl;
                 break;
             }
         }
@@ -205,6 +209,48 @@ private:
         current->children[chars[leftPos]] = newChild;
         newChild->children[chars[child->leftPos]] = child;
         return {false, newChild};
+    }
+
+    int countPrintLeafs(Node *node, const string &pattern, bool print, int positionDelta) {
+        int leafs = 0;
+        if (!node->children.empty()) {
+            int localPositionDelta = node->rightPos - node->leftPos;
+            map<char, Node *>::iterator itr = node->children.begin();
+            map<char, Node *>::iterator end = node->children.end();
+            while (itr != end) {
+                leafs += countPrintLeafs(itr->second, pattern, print, positionDelta + localPositionDelta);
+                ++itr;
+            }
+        } else {
+            if (print) {
+                printLine(node, pattern, positionDelta);
+            }
+            leafs = 1;
+        }
+        return leafs;
+    }
+
+    void printLine(Node *leaf, const string &pattern, int positionDelta) {
+        int patternStartPosition = leaf->leftPos - positionDelta;
+        int lineBegin = patternStartPosition;
+
+        while (lineBegin > 0) {
+            if (chars[lineBegin] == '\n') {
+                lineBegin++;
+                break;
+            }
+            lineBegin--;
+        }
+        int lineEnd = patternStartPosition;
+        while (lineEnd < chars.size()) {
+            if (chars[lineEnd] == '\n') {
+                lineEnd--;
+                break;
+            }
+            lineEnd++;
+        }
+        string line(chars.begin() + lineBegin, chars.begin() + lineEnd + 1);
+        cout << line << endl;
     }
 
     void serializeNodes(Node *node, vector<char> &bytes) {
