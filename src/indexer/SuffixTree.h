@@ -38,7 +38,9 @@ public:
             root(nullptr),
             chars(vector<char>()) {}
 
-    void buildIndex(const vector<char> &chars) override {
+    void buildIndex(const vector<char> &chars, bool verbose) override {
+        if (verbose) cout << "SUFFIX TREE Indexer" << endl << "size: " << chars.size() << endl;
+
         nodeIdGenerator = 0;
         grnd = new Node(nodeIdGenerator++, -1, -1);
         root = new Node(nodeIdGenerator++, -1, 0);
@@ -50,10 +52,12 @@ public:
 
         NodeData starter = {root, 0, 0};
         for (int i = 0; i < chars.size(); i++) {
+            if (verbose && i % 10000 == 0) cout << "\r  at: " << i << flush;
             starter = update(starter, chars, i);
             starter = canonise({get<0>(starter), get<1>(starter), get<2>(starter) + 1}, chars);
         }
         root->leftPos = 0;
+        if (verbose) cout << "Indexer finished - node count: " << nodeIdGenerator << endl;
     }
 
     void search(const vector<string> &patterns, bool count, bool print) {
@@ -101,16 +105,27 @@ public:
         }
     }
 
-    vector<char> serialize() override {
+    vector<char> serialize(bool verbose) override {
+        if (verbose)
+            cout << "SUFFIX TREE Serializer" << endl << "size: " << chars.size() << endl
+                 << "nodes: " << nodeIdGenerator << endl;
         vector<char> bytes;
-        serializeNodes(root, bytes);
+
+        int serializedNodesCount = 0;
+        serializeNodes(root, bytes, &serializedNodesCount, verbose);
+
+        if (verbose) cout << "serializing text" << endl;
+
         bytes.push_back('=');
         bytes.push_back('\n');
         copy(chars.begin(), chars.end(), back_inserter(bytes));
+
+        if (verbose) cout << "Serializer finished - bytes: " << bytes.size() << endl;
+
         return bytes;
     }
 
-    void deserialize(const vector<char> &bytes) override {
+    void deserialize(const vector<char> &bytes, bool verbose) override {
         stringstream stream;
         stream.write(&bytes[0], bytes.size());
 
@@ -253,12 +268,13 @@ private:
         cout << line << endl;
     }
 
-    void serializeNodes(Node *node, vector<char> &bytes) {
+    void serializeNodes(Node *node, vector<char> &bytes, int *serializedNodesCount, bool verbose) {
         if (!node->children.empty()) {
             map<char, Node *>::iterator itr = node->children.begin();
             map<char, Node *>::iterator end = node->children.end();
             while (itr != end) {
-                serializeNodes(itr->second, bytes);
+                serializeNodes(itr->second, bytes, serializedNodesCount, verbose);
+                if (verbose && *serializedNodesCount % 10000 == 0) cout << "\r   at: " << *serializedNodesCount << flush;
                 ++itr;
             }
         }
@@ -277,5 +293,6 @@ private:
             ++itr;
         }
         bytes.push_back('\n');
+        *serializedNodesCount += 1;
     }
 };
