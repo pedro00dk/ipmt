@@ -52,11 +52,12 @@ public:
 
         NodeData starter = {root, 0, 0};
         for (int i = 0; i < chars.size(); i++) {
-            if (verbose && i % 10000 == 0) cout << "\r  at: " << i << flush;
+            if (verbose && i % 10000 == 0) cout << "\r  at: " << i + 1 << flush;
             starter = update(starter, chars, i);
             starter = canonise({get<0>(starter), get<1>(starter), get<2>(starter) + 1}, chars);
         }
         root->leftPos = 0;
+        if (verbose) cout << "\r  at: " << chars.size() << endl;
         if (verbose) cout << "Indexer finished - node count: " << nodeIdGenerator << endl;
     }
 
@@ -113,6 +114,7 @@ public:
 
         int serializedNodesCount = 0;
         serializeNodes(root, bytes, &serializedNodesCount, verbose);
+        if (verbose) cout << "\r   at: " << serializedNodesCount + 1 << endl;
 
         if (verbose) cout << "serializing text" << endl;
 
@@ -274,7 +276,8 @@ private:
             map<char, Node *>::iterator end = node->children.end();
             while (itr != end) {
                 serializeNodes(itr->second, bytes, serializedNodesCount, verbose);
-                if (verbose && *serializedNodesCount % 10000 == 0) cout << "\r   at: " << *serializedNodesCount << flush;
+                if (verbose && *serializedNodesCount % 10000 == 0)
+                    cout << "\r   at: " << *serializedNodesCount << flush;
                 ++itr;
             }
         }
