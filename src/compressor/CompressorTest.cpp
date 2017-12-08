@@ -7,6 +7,7 @@
 #include "Compressor.h"
 #include "Lz77.h"
 #include "Lz78.h"
+#include "NoCompressor.h"
 #include "../util/FileUtils.h"
 
 using namespace std;
@@ -18,6 +19,7 @@ int main(int argc, char *argv[]) {
     string compressorName = argv[1];
     if (compressorName.compare("lz77") == 0) compressor = new Lz77();
     else if (compressorName.compare("lz78") == 0) compressor = new Lz78();
+    else if (compressorName.compare("uncompressed") == 0) compressor = new NoCompressor();
     else {
         puts("invalid compressor");
         return 1;

@@ -48,28 +48,20 @@ int main(int argc, char **argv) {
                 vector<char> encodedIndexBytes = compressor->encode(&indexBytes[0], indexBytes.size());
                 int compressorCode = compressor->getCompressorCode();
                 encodedIndexBytes.push_back(compressorCode);
-                printf("last written byte:%d\n", compressorCode);
                 FileUtils::writeBytes(fileOutStream, encodedIndexBytes);
             } else {
-                printf("last written byte:%d\n", 0);
                 indexBytes.push_back(0);
                 FileUtils::writeBytes(fileOutStream, indexBytes);
             }
         } else if (options.isSearch) {
-            puts("is search");
             vector<char> indexBytes;
-            printf("last read byte:%d\n", fileBytes[fileBytes.size() - 1]);
             compressor = CompressorMapper::getCompressorFromCode(fileBytes[fileBytes.size() - 1]);
             if (compressor != nullptr) {
-                puts("decoding");
                 indexBytes = compressor->decode(&fileBytes[0], fileBytes.size());
-                puts("decoded");
             } else {
                 indexBytes = fileBytes;
             }
-            puts("deserializing");
             indexer->deserialize(indexBytes, options.verbose);
-            puts("searching");
             indexer->search(options.patterns, options.count, !options.count);
         }
     }

@@ -247,29 +247,37 @@ def plot_search_time():
                 plot_data[compression_algorithm + '-' + index_algorithm]['x'] = pattern_sizes
                 plot_data[compression_algorithm + '-' + index_algorithm]['y'] = []
 
+        plot_data['grep'] = {}
+        plot_data['grep']['x'] = pattern_sizes
+        plot_data['grep']['y'] = []
+
         for pattern_size in pattern_sizes:
             patterns_path = '%s-%d' % (textfile_path, pattern_size)
 
             for compression_algorithm in compression_algorithms:
                 for index_algorithm in index_algorithms:
                     # index
-                    index_command = "./a.out index %s --compression=%s --indextype=%s" % (textfile_path,
+                    index_command = "./a.out index %s --compression=%s --indextype=%s " % (textfile_path,
                                                                                           compression_algorithm,
                                                                                           index_algorithm)
                     run(index_command, print_output=True)
 
                     # search
-                    search_command = "./a.out search %s %s" % ('pattern', textfile_idx_path)
-                    # search_command = "./a.out search %s %s" % ('pattern', patterns_path)
+                    search_command = "./a.out search %s %s -c" % ('pattern', textfile_idx_path)
+                    # search_command = "./a.out search -p %s %s -c" % (patterns_path, textfile_idx_path)
 
                     r = functools.partial(run, search_command, print_output=True)
                     run_time = get_run_time(r, runs=num_of_runs)
 
                     plot_data[compression_algorithm + '-' + index_algorithm]['y'] += [run_time]
-                    # plot_data[textfile_name] += [gzip_compressed_size]
 
+            grep_command = 'grep pattern "%s" -o | wc -l' % (textfile_path)
+            # grep_command = 'grep -f "%s" "%s" -o | wc -l' % (patterns_path,
+            #                                             textfile_path)
+            r = functools.partial(run, grep_command)
+            run_time = get_run_time(r, runs=num_of_runs)
+            plot_data['grep']['y'] += [run_time]
 
-                    # print(plot_data)
         PlotUtils.line_plot(plots=plot_data,
                             xlabel='Pattern sizes',
                             ylabel='Time in seconds',
