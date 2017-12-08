@@ -79,7 +79,32 @@ public:
     }
 
     vector<char> serialize(bool verbose) override {
-        return vector<char>();
+        if (verbose)
+            cout << "SUFFIX ARRAY Serializer" << endl << "size: " << chars.size() << endl;
+
+        vector<char> bytes;
+
+        if (verbose) cout << "serializing suffix array" << endl;
+        for (int i = 0; i < chars.size(); i++) {
+            string value = to_string(suffixArray[i]) + "\n";
+            bytes.insert(end(bytes), begin(value), end(value));
+        }
+        bytes.push_back('=');
+        bytes.push_back('\n');
+        if (verbose) cout << "serializing lcp" << endl;
+        for (int i = 0; i < chars.size(); i++) {
+            string value = to_string(lcp[i]) + "\n";
+            bytes.insert(end(bytes), begin(value), end(value));
+        }
+        bytes.push_back('=');
+        bytes.push_back('\n');
+
+        if (verbose) cout << "serializing text" << endl;
+        copy(chars.begin(), chars.end(), back_inserter(bytes));
+
+        if (verbose) cout << "Serializer finished - bytes: " << bytes.size() << endl;
+
+        return bytes;
     }
 
     void deserialize(const vector<char> &bytes, bool verbose) override {
