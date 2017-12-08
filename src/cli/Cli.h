@@ -10,6 +10,7 @@ using namespace std;
 
 // Cli options holder
 struct CliOptions {
+    bool verbose = false;
     bool isIndex = false;
     bool isSearch = false;
     string compressionAlgorithm = "";
@@ -20,9 +21,10 @@ struct CliOptions {
 };
 
 // CLI options
-static const string shortCliOptions = "ha:e:cp:";
+static const string shortCliOptions = "hve:i:cp:";
 static const vector<option> longCliOptions = {
         {"help",        no_argument,       nullptr, 'h'},
+        {"verbose",     no_argument,       nullptr, 'v'},
         {"compression", required_argument, nullptr, 'e'},
         {"indextype",   required_argument, nullptr, 'i'},
         {"count",       no_argument,       nullptr, 'c'},
@@ -33,8 +35,8 @@ static const string indexOperation = "index";
 static const string searchOperation = "search";
 
 // Options arguments
-static const vector<string> compressionAlgorithmArguments = {"lz77"};
-static const vector<string> indexAlgorithmArguments = {"suffixtree"};
+static const vector<string> compressionAlgorithmArguments = {"lz77", "lz78", "uncompressed"};
+static const vector<string> indexAlgorithmArguments = {"suffixtree", "suffixarray"};
 
 // Help message
 static const string help =
@@ -45,23 +47,26 @@ static const string help =
                 "ipmt <-h | --help>  -> show option help\n"
                 "Options:\n"
                 "-h,--help                  Display this information\n"
+                "-v,--verbose               Print program runtime information\n"
                 "-e,--compression <arg>     Specify the compression algorithm\n"
                 "-i,--indextype <arg>       Specify the indexing algorithm\n"
                 "-c,--count                 Display only the number of found occurrences\n"
                 "-p,--pattern <arg>         Specify a file with patterns to search\n"
                 "                           If specified, the first global argument (pattern) is treated as a text file\n"
                 "\n"
+                "--count and --pattern options should no be specified in index mode\n"
+                "\n"
                 "Examples:\n"
                 "ipmt index moby-dick.txt\n"
-                "ipmt search moby moby-dick.idx\n"
+                "ipmt search moby moby-dick.txt.idx\n"
                 "\n"
                 "\n"
                 "-comp,--compression <arg>  Specify the compression algorithm\n"
                 "arg options:\n"
-                "\tlz77\n"
+                "\tlz77, uncompressed\n"
                 "-i,--indextype <arg>       Specify the indexing algorithm\n"
                 "arg options:\n"
-                "\tsuffixtree\n"
+                "\tsuffixtree, suffixarray\n"
                 "\n";
 
 bool isInVector(const string &text, vector<string> vector) {
@@ -79,19 +84,22 @@ CliOptions parseCommand(int argc, char **argv) {
             case 'h':
                 cout << help;
                 exit(0);
-            case 'i':
-                options.indexAlgorithm = optarg;
-                if (!isInVector(optarg, indexAlgorithmArguments)) {
-                    cerr << "ERR: illegal index algorithm name" << endl;
-                    exit(1);
-                }
+            case 'v':
+                options.verbose = true;
                 break;
             case 'e':
-                options.compressionAlgorithm = optarg;
                 if (!isInVector(optarg, compressionAlgorithmArguments)) {
                     cerr << "ERR: illegal compression algorithm name" << endl;
                     exit(1);
                 }
+                options.compressionAlgorithm = optarg;
+                break;
+            case 'i':
+                if (!isInVector(optarg, indexAlgorithmArguments)) {
+                    cerr << "ERR: illegal index algorithm name" << endl;
+                    exit(1);
+                }
+                options.indexAlgorithm = optarg;
                 break;
             case 'c':
                 options.count = true;
@@ -118,29 +126,40 @@ CliOptions parseCommand(int argc, char **argv) {
     int argumentCount = argc - optind;
 
     if (argumentCount == 0) {
-        cerr << "ERR: invalid operation" << endl;
+        cerr << "ERR: mode not defined" << endl;
         exit(1);
     }
 
-    if (searchOperation.compare(arguments[0]) == 0) {
-        options.isSearch = true;
-    } else if (indexOperation.compare(arguments[0]) == 0) {
+    if (indexOperation == arguments[0]) {
         options.isIndex = true;
+        if (options.count) {
+            cerr << "ERR: count specified in index mode" << endl;
+            exit(1);
+        }
+        if (!options.patterns.empty()) {
+            cerr << "ERR: patterns specified in index mode" << endl;
+            exit(1);
+        }
+    } else if (searchOperation == arguments[0]) {
+        options.isSearch = true;
+
+        if (options.patterns.empty() && argumentCount < 3) {
+            cerr << "ERR: pattern not specified (see help)" << endl;
+            exit(1);
+        }
     } else {
         cerr << "ERR: invalid operation" << endl;
         exit(1);
     }
 
-    if (argumentCount == 1 && options.patterns.empty()) {
-        cerr << "ERR: missing pattern" << endl;
-        exit(1);
-    }
 
-    if (options.patterns.empty()) {
+    bool patternInCommand = false;
+    if (options.isSearch && options.patterns.empty()) {
         options.patterns.emplace_back(arguments[1]);
+        patternInCommand = true;
     }
 
-    for (int i = 2; i < argumentCount; i++) {
+    for (int i = 1 + (patternInCommand ? 1 : 0); i < argumentCount; i++) {
         options.files.emplace_back(arguments[i]);
     }
 
