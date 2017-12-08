@@ -4,12 +4,13 @@ import pandas as pd
 
 class PlotUtils:
     @staticmethod
-    def line_plot(plots, xlabel, ylabel, save_filename):
+    def line_plot(plots, xlabel, ylabel, title, save_filename):
         for plot_label, plot_data in plots.items():
             plt.plot(plot_data['x'], plot_data['y'], label=plot_label, marker='x')
 
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
+        plt.title(title)
         plt.legend()
         plt.grid()
         plt.show()
