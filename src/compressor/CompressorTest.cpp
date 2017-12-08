@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
     if (string(argv[3]).compare("compress") == 0) {
         int t0 = time(NULL);
         ifstream fileStream(filename);
+        FileUtils::checkFile(fileStream, filename);
+
         vector<char> inputVector = FileUtils::readBytes(fileStream);
         vector<char> encoded = compressor->encode(&inputVector[0], inputVector.size());
 
@@ -44,7 +46,9 @@ int main(int argc, char *argv[]) {
 
     } else if (string(argv[3]).compare("decompress") == 0) {
         int t0 = time(NULL);
-        ifstream fileStream(filename + ".myzip");
+        ifstream fileStream(filename);
+        FileUtils::checkFile(fileStream, filename);
+
         vector<char> inputVector = FileUtils::readBytes(fileStream);
         vector<char> decoded = compressor->decode(&inputVector[0], inputVector.size());
         int t1 = time(NULL);
@@ -53,6 +57,8 @@ int main(int argc, char *argv[]) {
     } else if (string(argv[3]).compare("validate") == 0) {
         int t0 = time(NULL);
         ifstream fileStream(filename);
+        FileUtils::checkFile(fileStream, filename);
+
         vector<char> inputVector = FileUtils::readBytes(fileStream);
         vector<char> encoded = compressor->encode(&inputVector[0], inputVector.size());
         vector<char> decoded = compressor->decode(&encoded[0], encoded.size());
@@ -61,7 +67,7 @@ int main(int argc, char *argv[]) {
             assert(decoded[i] == inputVector[i]);
         }
 
-        printf("original size:%d decoded size:%d\n", inputVector.size(), decoded.size());
+        printf("original size:%d decoded size:%d encoded size:%d\n", inputVector.size(), decoded.size(), encoded.size());
     } else {
         puts("invalid mode");
         return 1;
