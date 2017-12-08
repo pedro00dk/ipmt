@@ -4,7 +4,7 @@ import pandas as pd
 
 class PlotUtils:
     @staticmethod
-    def line_plot(plots, xlabel, ylabel, title, save_filename):
+    def line_plot(plots, xlabel, ylabel, title, save_filename=None):
         for plot_label, plot_data in plots.items():
             plt.plot(plot_data['x'], plot_data['y'], label=plot_label, marker='x')
 
@@ -13,12 +13,14 @@ class PlotUtils:
         plt.title(title)
         plt.legend()
         plt.grid()
-        plt.show()
-        # plt.savefig(save_filename + '.png')
+        if save_filename is None:
+            plt.show()
+        else:
+            plt.savefig(save_filename + '.png')
         plt.clf()
 
     @staticmethod
-    def bar_plot(plot_values, plot_labels, colors, ylabel, title):
+    def bar_plot(plot_values, plot_labels, colors, ylabel, title, save_filename=None):
         # Setting the positions and width for the bars
         positions = list(range(len(plot_values)))
         width = 0.75
@@ -55,4 +57,8 @@ class PlotUtils:
         # Adding the legend and showing the plot
         plt.legend(plot_labels, loc='best')
         plt.grid()
-        plt.show()
+        if save_filename is None:
+            plt.show()
+        else:
+            plt.savefig(save_filename + '.png')
+        plt.clf()
