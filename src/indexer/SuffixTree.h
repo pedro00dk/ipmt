@@ -62,46 +62,46 @@ public:
     }
 
     void search(const vector<string> &patterns, bool count, bool print) {
+        for (const string &pattern : patterns) {
+            int patternSize = pattern.size();
 
-        string pattern = patterns[0];
-        int patternSize = patterns[0].size();
+            int patternCursor = 0;
+            Node *nodeCursor = root;
 
-        int patternCursor = 0;
-        Node *nodeCursor = root;
+            bool patternNotExists = false;
 
-        bool patternNotExists = false;
+            int positionDelta = 0;
+            while (!patternNotExists) {
+                for (
+                        int i = nodeCursor->leftPos;
+                        patternCursor < patternSize && i < min(nodeCursor->rightPos, (int) chars.size());
+                        i++) {
 
-        int positionDelta = 0;
-        while (!patternNotExists) {
-            for (
-                    int i = nodeCursor->leftPos;
-                    patternCursor < patternSize && i < min(nodeCursor->rightPos, (int) chars.size());
-                    i++) {
+                    if (chars[i] == pattern[patternCursor]) {
+                        patternCursor++;
+                    } else {
+                        patternNotExists = true;
+                        break;
+                    }
+                }
 
-                if (chars[i] == pattern[patternCursor]) {
-                    patternCursor++;
-                } else {
-                    patternNotExists = true;
+                if (patternCursor == patternSize) {
+                    int occurrences = countPrintLeafs(nodeCursor, pattern, print, positionDelta);
+                    if (count) cout << pattern << ": " << occurrences << endl;
                     break;
                 }
-            }
 
-            if (patternCursor == patternSize) {
-                int occurrences = countPrintLeafs(nodeCursor, pattern, print, positionDelta);
-                if (count) cout << pattern << ": " << occurrences << endl;
-                break;
-            }
+                if (!patternNotExists) {
+                    if (nodeCursor->children.count(pattern[patternCursor]) != 0) {
+                        positionDelta += nodeCursor->rightPos - nodeCursor->leftPos;
+                        nodeCursor = nodeCursor->children[pattern[patternCursor]];
+                    } else patternNotExists = true;
+                }
 
-            if (!patternNotExists) {
-                if (nodeCursor->children.count(pattern[patternCursor]) != 0) {
-                    positionDelta += nodeCursor->rightPos - nodeCursor->leftPos;
-                    nodeCursor = nodeCursor->children[pattern[patternCursor]];
-                } else patternNotExists = true;
-            }
-
-            if (patternNotExists) {
-                if (count) cout << pattern << ": 0" << endl;
-                break;
+                if (patternNotExists) {
+                    if (count) cout << pattern << ": 0" << endl;
+                    break;
+                }
             }
         }
     }
