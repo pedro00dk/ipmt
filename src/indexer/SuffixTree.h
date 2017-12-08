@@ -114,7 +114,7 @@ public:
 
         int serializedNodesCount = 0;
         serializeNodes(root, bytes, &serializedNodesCount, verbose);
-        if (verbose) cout << "\r   at: " << serializedNodesCount << endl;
+        if (verbose) cout << "\r   at: " << serializedNodesCount + 1 << endl;
 
         if (verbose) cout << "serializing text" << endl;
 
