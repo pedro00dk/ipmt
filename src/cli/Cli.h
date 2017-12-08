@@ -10,6 +10,7 @@ using namespace std;
 
 // Cli options holder
 struct CliOptions {
+    bool verbose = false;
     bool isIndex = false;
     bool isSearch = false;
     string compressionAlgorithm = "";
@@ -20,9 +21,10 @@ struct CliOptions {
 };
 
 // CLI options
-static const string shortCliOptions = "ha:e:cp:";
+static const string shortCliOptions = "hve:i:cp:";
 static const vector<option> longCliOptions = {
         {"help",        no_argument,       nullptr, 'h'},
+        {"verbose",     no_argument,       nullptr, 'v'},
         {"compression", required_argument, nullptr, 'e'},
         {"indextype",   required_argument, nullptr, 'i'},
         {"count",       no_argument,       nullptr, 'c'},
@@ -45,6 +47,7 @@ static const string help =
                 "ipmt <-h | --help>  -> show option help\n"
                 "Options:\n"
                 "-h,--help                  Display this information\n"
+                "-v,--verbose               Print program runtime information\n"
                 "-e,--compression <arg>     Specify the compression algorithm\n"
                 "-i,--indextype <arg>       Specify the indexing algorithm\n"
                 "-c,--count                 Display only the number of found occurrences\n"
@@ -60,10 +63,10 @@ static const string help =
                 "\n"
                 "-comp,--compression <arg>  Specify the compression algorithm\n"
                 "arg options:\n"
-                "\tlz77\n"
+                "\tlz77, uncompressed\n"
                 "-i,--indextype <arg>       Specify the indexing algorithm\n"
                 "arg options:\n"
-                "\tsuffixtree, suffixarray, uncompressed\n"
+                "\tsuffixtree, suffixarray\n"
                 "\n";
 
 bool isInVector(const string &text, vector<string> vector) {
@@ -81,6 +84,9 @@ CliOptions parseCommand(int argc, char **argv) {
             case 'h':
                 cout << help;
                 exit(0);
+            case 'v':
+                options.verbose = true;
+                break;
             case 'e':
                 if (!isInVector(optarg, compressionAlgorithmArguments)) {
                     cerr << "ERR: illegal compression algorithm name" << endl;
