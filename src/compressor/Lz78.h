@@ -11,25 +11,25 @@ using namespace std;
 class Lz78 : public Compressor {
 private:
     int dictMaxSize = 256;
-    map<vector<char>, int> dict;
-    int nextDictPos;
 public:
     Lz78() {}
 
     vector<char> encode(char *str, int strSize) override {
         puts("encoding");
         vector<char> encoded;
+        map<string, int> dict;
+        int nextDictPos;
 
         dict.clear();
         for (char c = 'a'; c <= 'z'; c++) {
-            vector<char> tmp;
+            string tmp = "";
             tmp.push_back(c);
-            dict[tmp] = c - 'a';
+            dict[tmp] = c - 'a' + 1;
         }
-//        dict[vector<char>()] = 0;
-        nextDictPos = 'z' - 'a' + 1;
+        dict[""] = 0;
+        nextDictPos = 'z' - 'a' + 2;
 
-        vector<char> currentStr;
+        string currentStr = "";
         for (int i = 0; i < strSize; i++) {
             currentStr.push_back(str[i]);
 
@@ -41,11 +41,12 @@ public:
                 if (dict.size() == dictMaxSize) {
                     dict.clear();
                     for (char c = 'a'; c <= 'z'; c++) {
-                        vector<char> tmp;
+                        string tmp = "";
                         tmp.push_back(c);
-                        dict[tmp] = c - 'a';
+                        dict[tmp] = c - 'a' + 1;
                     }
-                    nextDictPos = 'z' - 'a' + 1;
+                    dict[""] = 0;
+                    nextDictPos = 'z' - 'a' + 2;
                 } else {
                     currentStr.push_back(str[i]);
                     dict[currentStr] = nextDictPos;
@@ -67,13 +68,16 @@ public:
         puts("decoding");
         vector<char> decoded;
 
-        vector<char> reverseDict[dictMaxSize];
+        string reverseDict[dictMaxSize];
+        int nextDictPos;
+
+        reverseDict[0] = "";
         for (char c = 'a'; c <= 'z'; c++) {
-            vector<char> tmp;
+            string tmp = "";
             tmp.push_back(c);
-            reverseDict[c - 'a'] = tmp;
+            reverseDict[c - 'a' + 1] = tmp;
         }
-        nextDictPos = 'z' - 'a' + 1;
+        nextDictPos = 'z' - 'a' + 2;
 
         for (int i = 0; i < encodedSize; i += 2) {
             int dictPos = (unsigned char) encoded[i];
@@ -85,13 +89,13 @@ public:
             decoded.push_back(nextChar);
 
             if (nextDictPos == dictMaxSize) {
-                nextDictPos = 'z' - 'a' + 1;
+                nextDictPos = 'z' - 'a' + 2;
                 for (int j = nextDictPos; j < dictMaxSize; j++) {
                     reverseDict[j].clear();
                 }
             } else {
                 //TODO check if copy necessary
-                vector<char> newEntry;
+                string newEntry = "";
                 for (char c : reverseDict[dictPos]) {
                     newEntry.push_back(c);
                 }
@@ -103,6 +107,4 @@ public:
 
         return decoded;
     }
-
-private:
 };
