@@ -20,31 +20,43 @@ int main(int argc, char *argv[]) {
     if (compressorName.compare("lz77") == 0) compressor = new Lz77();
     else if (compressorName.compare("lz78") == 0) compressor = new Lz78();
     else {
-        //error
+        puts("invalid compressor");
+        return 1;
     }
 
     string filename = argv[2];
     cout << filename << endl;
-    vector<char> encoded;
-    vector<char> decoded;
 
-    int t0 = time(NULL);
-    vector<char> inputVector;
-    inputVector = FileUtils::readBytes(filename);
+    if (string(argv[3]).compare("compress") == 0) {
+        int t0 = time(NULL);
+        ifstream fileStream(filename);
+        vector<char> inputVector = FileUtils::readBytes(fileStream);
+        vector<char> encoded = compressor->encode(&inputVector[0], inputVector.size());
 
-    encoded = compressor->encode(&inputVector[0], inputVector.size());
-    decoded = compressor->decode(&encoded[0], encoded.size());
+        ofstream fileOutStream = ofstream(filename + ".myzip");
+        FileUtils::writeBytes(fileOutStream, encoded);
 
-    assert(inputVector.size() == decoded.size());
-    for (int i = 0; i < decoded.size(); i++) assert(inputVector[i] == decoded[i]);
-    FileUtils::writeBytes(filename + ".myzip", encoded);
+        int t1 = time(NULL);
+        printf("encoded size:%d original size:%d compression:%lf\n",
+               encoded.size(),
+               inputVector.size(),
+               double(encoded.size()) / inputVector.size());
+        printf("time = %d secs\n", t1 - t0);
 
-    int t1 = time(NULL);
-    printf("encoded size:%d decoded size:%d compression:%lf\n",
-           encoded.size(),
-           decoded.size(),
-           double(encoded.size()) / decoded.size());
-    printf("time = %d secs\n", t1 - t0);
+//    vector<char> decoded = compressor->decode(&encoded[0], encoded.size());
+//    printf("decoded size:%d\n", decoded.size());
+//    FileUtils::writeBytes(fileOutStream, decoded);
+    } else if (string(argv[3]).compare("decompress") == 0) {
+        int t0 = time(NULL);
+        ifstream fileStream(filename + ".myzip");
+        vector<char> inputVector = FileUtils::readBytes(fileStream);
+        vector<char> decoded = compressor->decode(&inputVector[0], inputVector.size());
+        int t1 = time(NULL);
 
+        printf("time = %d secs\n", t1 - t0);
+    } else {
+        puts("invalid mode");
+        return 1;
+    }
     return 0;
 }
