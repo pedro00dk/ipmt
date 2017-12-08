@@ -7,17 +7,20 @@ from plot_utils import PlotUtils
 
 textfiles_dir = 'testFiles/'
 # textfiles_names = ['code.h', 'shakespeare.txt', 'html.html', 'bin.exe']
-textfiles_names = ['code.h', 'html.html', 'bin.exe']
+# textfiles_names = ['code.h', 'html.html', 'bin.exe']
+textfiles_names = ['code.py', 'code_copy.py']
 cpp_compression_source = '../src/compressor/CompressorTest.cpp'
 cpp_ipmt_source = '../src/ipmt.cpp'
 compile_base_command = 'g++ -std=c++11 -O2 '
-# run_base_command = './a.out '
-run_base_command = 'a.exe '
+run_base_command = './a.out '
+# run_base_command = 'a.exe '
+colors = ['#EE3224', '#F78F1E', '#FFC222', '#FFC222', '#FFC222', '#FFC222']
+num_of_runs = 10
 
-compression_algorithms = ["lz77"]
+compression_algorithms = ['lz77', 'lz78']
 
 
-def run(command, print_output=False):
+def run(command, print_output=True):
     print(command)
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     process.wait()
@@ -42,12 +45,20 @@ def plot_compression_size():
         textfile_path = textfiles_dir + textfile_name
         textfile_zip_path = textfile_path + ".myzip"
 
-        plot_labels = ['original']
+        plot_labels = ['original', 'gzip']
         for algorithm in compression_algorithms:
             plot_labels += [algorithm]
 
+        print(plot_labels)
+
         original_size = os.path.getsize(textfile_path)
         plot_values = [original_size]
+
+        gzip_command = "gzip -k -f " + textfile_path
+        run(gzip_command)
+        textfile_gzip_path = textfile_path + ".gz"
+        gzip_size = os.path.getsize(textfile_gzip_path)
+        plot_values += [gzip_size]
 
         for algorithm in compression_algorithms:
             run_command = run_base_command + ' %s %s compress' % (algorithm, textfile_path)
@@ -69,9 +80,6 @@ def plot_compression_size():
 
         print(plot_values)
 
-        colors = ['#EE3224', '#F78F1E', '#FFC222']
-        # TODO: check uncompressed mode
-        legend = ['original'] + compression_algorithms  # + ['gzip']
         PlotUtils.bar_plot(plot_values,
                            plot_labels=plot_labels,
                            colors=colors,
@@ -92,6 +100,14 @@ def plot_compression_time():
 
         plot_values = []
         plot_labels = []
+
+        gzip_command = "gzip -k -f " + textfile_path
+        r = functools.partial(run, gzip_command, print_output=True)
+        run_time = get_run_time(r, runs=num_of_runs)
+        plot_values += [run_time]
+        plot_labels += ['gzip']
+        
+
         for algorithm in compression_algorithms:
             plot_labels += [algorithm]
 
@@ -102,7 +118,7 @@ def plot_compression_time():
                 os.remove(textfile_zip_path)
 
             r = functools.partial(run, run_command, print_output=True)
-            run_time = get_run_time(r, runs=10)
+            run_time = get_run_time(r, runs=num_of_runs)
 
             plot_values += [run_time]
 
@@ -127,20 +143,31 @@ def plot_decompression_time():
     run(compile_command, print_output=True)
 
     for textfile_name in textfiles_names:
-        textfile_zip_path = textfiles_dir + textfile_name + ".myzip"
+        textfile_path = textfiles_dir + textfile_name
+        textfile_zip_path = textfile_path + ".myzip"
 
         plot_values = []
         plot_labels = []
+
+        textfile_gzip_path = textfile_path + ".gz"
+        gzip_compress_command = "gzip -k -f " + textfile_path
+        gzip_decompress_command = "gzip -k -f -d " + textfile_gzip_path
+        run(gzip_compress_command)
+        r = functools.partial(run, gzip_decompress_command, print_output=True)
+        run_time = get_run_time(r, runs=10)
+        plot_values += [run_time]
+        plot_labels += ['gzip']
+
         for algorithm in compression_algorithms:
             plot_labels += [algorithm]
 
         for algorithm in compression_algorithms:
-            compression_command = run_base_command + ' %s %s compress' % (algorithm, textfile_zip_path)
+            compression_command = run_base_command + ' %s %s compress' % (algorithm, textfile_path)
             decompression_command = run_base_command + ' %s %s decompress' % (algorithm, textfile_zip_path)
             run(compression_command, print_output=True)
 
             r = functools.partial(run, decompression_command, print_output=True)
-            run_time = get_run_time(r, runs=10)
+            run_time = get_run_time(r, runs=num_of_runs)
 
             plot_values += [run_time]
 
@@ -158,8 +185,8 @@ def plot_decompression_time():
 
 
 def plot_index_time():
-    compression_algorithms = ['lz77']
-    index_algorithms = ['suffix-tree']
+    compression_algorithms = ['lz77', 'lz78']
+    index_algorithms = ['suffixtree']
 
     compile_command = compile_base_command + " " + cpp_ipmt_source  # TODO
     run(compile_command, print_output=True)
@@ -175,11 +202,12 @@ def plot_index_time():
 
         for compression_algorithm in compression_algorithms:
             for index_algorithm in index_algorithms:
-                # run_command = "./a.out %s %s" % (algorithm, textfile_path)
-                run_command = run_base_command + ' index %s' % textfile_path
+                index_command = "./a.out index %s --compression=%s --indextype=%s" % (textfile_path,
+                                                                                  compression_algorithm,
+                                                                                  index_algorithm)
 
-                r = functools.partial(run, run_command, print_output=True)
-                run_time = get_run_time(r, runs=10)
+                r = functools.partial(run, index_command, print_output=True)
+                run_time = get_run_time(r, runs=num_of_runs)
 
                 plot_values += [run_time]
                 # plot_data[textfile_name] += [gzip_compressed_size]
@@ -193,7 +221,7 @@ def plot_index_time():
                            plot_labels=plot_labels,
                            colors=colors,
                            ylabel="time in seconds",
-                           title="Decompression time of " + textfile_name)
+                           title="Index time of " + textfile_name)
 
 
 def plot_search_time():
@@ -218,14 +246,15 @@ def plot_search_time():
 
             for compression_algorithm in compression_algorithms:
                 for index_algorithm in index_algorithms:
-                    # run_command = "./a.out %s %s" % (algorithm, textfile_path)
                     # index
-                    index_command = "./a.out %s %s" % ('index', textfile_path)
+                    index_command = "./a.out index %s compression=%s indextype=%s" % (textfile_path,
+                                                                                      compression_algorithm,
+                                                                                      index_algorithm)
                     run(index_command, print_output=True)
 
                     # search
                     search_command = "./a.out %s %s teste" % ('index', textfile_path)
-                    run_time = get_run_time(run(search_command, print_output=True), runs=10)
+                    run_time = get_run_time(run(search_command, print_output=True), runs=num_of_runs)
 
                     plot_data[compression_algorithm + '-' + index_algorithm]['y'] += [run_time]
                     # plot_data[textfile_name] += [gzip_compressed_size]
@@ -243,9 +272,9 @@ def plot_search_time():
 
 
 def main():
-    # plot_compression_size()
+    plot_compression_size()
     # plot_compression_time()
-    plot_decompression_time()
+    # plot_decompression_time()
     # plot_index_time()
     # plot_search_time()
 
