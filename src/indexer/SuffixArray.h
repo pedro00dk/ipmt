@@ -67,7 +67,15 @@ public:
     }
 
     void search(const vector<string> &patterns, bool count, bool print) override {
-
+        for (const string &pattern : patterns) {
+            int left = searchPredecessor(pattern);
+            int right = searchSuccessor(pattern);
+            int occurrences = max(right - left, 0);
+            if (print && occurrences < 0) {
+                inspectPrintOccurrences(left, right);
+            }
+            if (count) cout << pattern << ": " << occurrences << endl;
+        }
     }
 
     vector<char> serialize(bool verbose) override {
@@ -100,6 +108,87 @@ private:
             lcp[inverseSuffixArray[i]] = k;
 
             if (k > 0) k--;
+        }
+    }
+
+    int searchPredecessor(const string &pattern) {
+        int charsSize = chars.size();
+        int patternSize = pattern.size();
+        if (partialLexComp(pattern, charsSize - 1, charsSize, patternSize) <= 0)
+            return charsSize - 1;
+        if (partialLexComp(pattern, 0, charsSize, patternSize) < 0)
+            return -1;
+        else {
+            int l = 0;
+            int r = charsSize - 1;
+            while (l - r > 1) {
+                int h = (l + r) / 2;
+                if (partialLexComp(pattern, suffixArray[h], charsSize, patternSize) <= 0) {
+                    l = h;
+                } else {
+                    r = h;
+                }
+            }
+            return l;
+        }
+    }
+
+    int searchSuccessor(const string &pattern) {
+        int charsSize = chars.size();
+        int patternSize = pattern.size();
+        if (partialLexComp(pattern, 0, charsSize, patternSize) <= 0)
+            return 0;
+        if (partialLexComp(pattern, charsSize - 1, charsSize, patternSize) < 0)
+            return charsSize;
+        else {
+            int l = 0;
+            int r = charsSize - 1;
+            while (l - r > 1) {
+                int h = (l + r) / 2;
+                if (partialLexComp(pattern, suffixArray[h], charsSize, patternSize) <= 0) {
+                    r = h;
+                } else {
+                    l = h;
+                }
+            }
+            return r;
+        }
+    }
+
+    int partialLexComp(const string &pattern, int charsFrom, int charsTo, int max) {
+        int minimumMax = min((int) pattern.size(), (charsTo - charsFrom));
+        minimumMax = min(max, minimumMax);
+        for (int i = 0; i < minimumMax; i++) {
+            if (pattern[i] < chars[charsFrom + i]) return -1;
+            if (pattern[i] > chars[charsFrom + i]) return 1;
+        }
+        if (minimumMax == max || pattern.size() == charsTo - charsFrom) return 0;
+        else if (pattern.size() < charsTo - charsFrom) return -1;
+        else return 1;
+    }
+
+    void inspectPrintOccurrences(int left, int right) {
+        for (int i = left; i < right; i++) {
+            int patternStartPosition = suffixArray[i];
+            int lineBegin = patternStartPosition;
+
+            while (lineBegin > 0) {
+                if (chars[lineBegin] == '\n') {
+                    lineBegin++;
+                    break;
+                }
+                lineBegin--;
+            }
+            int lineEnd = patternStartPosition;
+            while (lineEnd < chars.size()) {
+                if (chars[lineEnd] == '\n') {
+                    lineEnd--;
+                    break;
+                }
+                lineEnd++;
+            }
+            string line(chars.begin() + lineBegin, chars.begin() + lineEnd + 1);
+            cout << line << endl;
         }
     }
 };
