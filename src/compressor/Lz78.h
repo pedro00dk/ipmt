@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
-#include <list>
+#include <deque>
 #include "Compressor.h"
 
 using namespace std;
@@ -18,15 +18,14 @@ public:
     Lz78() {}
 
     vector<char> encode(char *str, int strSize) override {
-        puts("encoding");
         vector<char> encoded;
         unordered_map<string, int> dict;
-        list <unordered_map<string, int>::iterator> dictPos;
+        deque <unordered_map<string, int>::iterator> dictPos;
         int nextDictPos = 1;
 
         dict.clear();
         dict[""] = 0;
-        dictPos.push_back(dict.begin());
+        //dictPos.push_back(dict.begin());
 
         string currentStr = "";
         for (int i = 0; i < strSize; i++) {
@@ -40,11 +39,8 @@ public:
                 encoded.push_back(str[i]);
 
                 if (dict.size() == dictMaxSize) {
-                    auto dictPosIt = dictPos.begin();
-                    dictPosIt++;
-
-                    dict.erase(*dictPosIt);
-                    dictPos.erase(dictPosIt);
+                    dict.erase(*dictPos.begin());
+                    dictPos.pop_front();
                 }
 
                 currentStr.push_back(str[i]);
@@ -65,7 +61,6 @@ public:
     }
 
     vector<char> decode(char *encoded, int encodedSize) override {
-        puts("decoding");
         vector<char> decoded;
         string reverseDict[dictMaxSize];
 
