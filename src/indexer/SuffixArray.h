@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <sstream>
 #include "Indexer.h"
 
 
@@ -67,14 +68,113 @@ public:
     }
 
     void search(const vector<string> &patterns, bool count, bool print) override {
-        for (const string &pattern : patterns) {
-            int left = searchPredecessor(pattern);
-            int right = searchSuccessor(pattern);
-            int occurrences = max(right - left, 0);
-            if (print && occurrences < 0) {
-                inspectPrintOccurrences(left, right);
+        int charsSize = chars.size();
+        for (int i = 0; i < patterns.size(); i++) {
+            string pattern = patterns[i];
+            int patternSize = pattern.size();
+
+            //
+            int sucessor;
+
+            if (partialLexComp(&chars[0], suffixArray[charsSize - 1], charsSize, &pattern[0], 0, patternSize,
+                               patternSize) <= 0) {
+                sucessor = charsSize - 1;
+            } else if (partialLexComp(&pattern[0], 0, patternSize, &chars[0], suffixArray[0], charsSize,
+                                      patternSize) < 0) {
+                sucessor = -1;
+            } else {
+                int l = 0;
+                int r = charsSize - 1;
+                while (r - l > 1) {
+                    int h = (l + r) / 2;
+                    if (partialLexComp(&chars[0], suffixArray[h], charsSize, &pattern[0], 0, patternSize,
+                                       patternSize) <= 0) {
+                        l = h;
+                    } else {
+                        r = h;
+                    }
+                }
+                sucessor = l;
             }
-            if (count) cout << pattern << ": " << occurrences << endl;
+
+            int predecessor;
+            if (partialLexComp(&pattern[0], 0, patternSize, &chars[0], suffixArray[0], charsSize, patternSize) <= 0) {
+                predecessor = 0;
+            } else if (partialLexComp(&chars[0], suffixArray[charsSize - 1], charsSize, &pattern[0], 0, patternSize,
+                                      patternSize) < 0) {
+                predecessor = charsSize;
+            } else {
+                int l = 0;
+                int r = charsSize - 1;
+                while (r - l > 1) {
+                    int h = (l + r) / 2;
+                    if (partialLexComp(&pattern[0], 0, patternSize, &chars[0], suffixArray[h], charsSize,
+                                       patternSize) <= 0) {
+                        r = h;
+                    } else {
+                        l = h;
+                    }
+                }
+                predecessor = r;
+            }
+
+            if (sucessor < predecessor) {
+                if (count) cout << pattern << ": " << 0 << endl;
+            } else {
+                int occurrences = sucessor - predecessor + 1;
+                if (print) inspectPrintOccurrences(predecessor, sucessor);
+                if (count) cout << pattern << ": " << occurrences << endl;
+            }
+
+        }
+    }
+
+    int partialLexComp2(const string &pattern, int charsFrom, int charsTo, int max) {
+        int minimumMax = min((int) pattern.size(), (charsTo - charsFrom));
+        minimumMax = min(max, minimumMax);
+        for (int i = 0; i < minimumMax; i++) {
+            if (pattern[i] < chars[charsFrom + i]) return -1;
+            if (pattern[i] > chars[charsFrom + i]) return 1;
+        }
+        if (minimumMax == max || pattern.size() == charsTo - charsFrom) return 0;
+        else if (pattern.size() < charsTo - charsFrom) return -1;
+        else return 1;
+    }
+
+    int partialLexComp(const char *s0, int f0, int t0, const char *s1, int f1, int t1, int max) {
+        int minimumMax = min(max, min(t0 - f0, t1 - f1));
+        for (int i = 0; i < minimumMax; i++) {
+            if (s0[f0 + i] < s1[f1 + i]) return -1;
+            if (s0[f0 + i] > s1[f1 + i]) return 1;
+        }
+        if (minimumMax == max) return 0;
+        if (t0 - f0 < t1 - f1) return -1;
+        if (t0 - f0 > t1 - f1) return 1;
+        else return 0;
+    }
+
+    void inspectPrintOccurrences(int left, int right) {
+        for (int i = left; i <= right; i++) {
+            int patternStartPosition = suffixArray[i];
+            int lineBegin = patternStartPosition;
+
+            while (lineBegin > 0) {
+                if (chars[lineBegin] == '\n') {
+                    lineBegin++;
+                    break;
+                }
+                lineBegin--;
+            }
+            int lineEnd = patternStartPosition;
+            while (lineEnd < chars.size()) {
+                if (chars[lineEnd] == '\n') {
+                    lineEnd--;
+                    break;
+                }
+                lineEnd++;
+            }
+            string line(chars.begin() + lineBegin, chars.begin() + lineEnd + 1);
+            cout << line << endl;
         }
     }
 
@@ -83,6 +183,12 @@ public:
             cout << "SUFFIX ARRAY Serializer" << endl << "size: " << chars.size() << endl;
 
         vector<char> bytes;
+
+        string size = to_string(chars.size()) + "\n";
+        bytes.insert(end(bytes), begin(size), end(size));
+
+        bytes.push_back('=');
+        bytes.push_back('\n');
 
         if (verbose) cout << "serializing suffix array" << endl;
         for (int i = 0; i < chars.size(); i++) {
@@ -108,7 +214,37 @@ public:
     }
 
     void deserialize(const vector<char> &bytes, bool verbose) override {
+        stringstream stream;
+        stream.write(&bytes[0], bytes.size());
 
+        string line;
+        getline(stream, line);
+        int size = stoi(line);
+        getline(stream, line); // =
+
+        suffixArray = vector<int>(size);
+        lcp = vector<int>(size);
+        chars = vector<char>(size);
+
+        bool inSuffixArray = true;
+        int i = 0;
+        for (; getline(stream, line);) {
+            if (inSuffixArray) {
+                if (i < size) suffixArray[i++] = stoi(line);
+                else {
+                    inSuffixArray = false;
+                    i = 0;
+                }
+            } else {
+                if (i < size) lcp[i++] = stoi(line);
+                else {
+                    break;
+                }
+            }
+        }
+
+        stream >> std::noskipws;
+        chars = vector<char>((istreambuf_iterator<char>(stream)), istreambuf_iterator<char>());
     }
 
 private:
@@ -133,87 +269,6 @@ private:
             lcp[inverseSuffixArray[i]] = k;
 
             if (k > 0) k--;
-        }
-    }
-
-    int searchPredecessor(const string &pattern) {
-        int charsSize = chars.size();
-        int patternSize = pattern.size();
-        if (partialLexComp(pattern, charsSize - 1, charsSize, patternSize) <= 0)
-            return charsSize - 1;
-        if (partialLexComp(pattern, 0, charsSize, patternSize) < 0)
-            return -1;
-        else {
-            int l = 0;
-            int r = charsSize - 1;
-            while (l - r > 1) {
-                int h = (l + r) / 2;
-                if (partialLexComp(pattern, suffixArray[h], charsSize, patternSize) <= 0) {
-                    l = h;
-                } else {
-                    r = h;
-                }
-            }
-            return l;
-        }
-    }
-
-    int searchSuccessor(const string &pattern) {
-        int charsSize = chars.size();
-        int patternSize = pattern.size();
-        if (partialLexComp(pattern, 0, charsSize, patternSize) <= 0)
-            return 0;
-        if (partialLexComp(pattern, charsSize - 1, charsSize, patternSize) < 0)
-            return charsSize;
-        else {
-            int l = 0;
-            int r = charsSize - 1;
-            while (l - r > 1) {
-                int h = (l + r) / 2;
-                if (partialLexComp(pattern, suffixArray[h], charsSize, patternSize) <= 0) {
-                    r = h;
-                } else {
-                    l = h;
-                }
-            }
-            return r;
-        }
-    }
-
-    int partialLexComp(const string &pattern, int charsFrom, int charsTo, int max) {
-        int minimumMax = min((int) pattern.size(), (charsTo - charsFrom));
-        minimumMax = min(max, minimumMax);
-        for (int i = 0; i < minimumMax; i++) {
-            if (pattern[i] < chars[charsFrom + i]) return -1;
-            if (pattern[i] > chars[charsFrom + i]) return 1;
-        }
-        if (minimumMax == max || pattern.size() == charsTo - charsFrom) return 0;
-        else if (pattern.size() < charsTo - charsFrom) return -1;
-        else return 1;
-    }
-
-    void inspectPrintOccurrences(int left, int right) {
-        for (int i = left; i < right; i++) {
-            int patternStartPosition = suffixArray[i];
-            int lineBegin = patternStartPosition;
-
-            while (lineBegin > 0) {
-                if (chars[lineBegin] == '\n') {
-                    lineBegin++;
-                    break;
-                }
-                lineBegin--;
-            }
-            int lineEnd = patternStartPosition;
-            while (lineEnd < chars.size()) {
-                if (chars[lineEnd] == '\n') {
-                    lineEnd--;
-                    break;
-                }
-                lineEnd++;
-            }
-            string line(chars.begin() + lineBegin, chars.begin() + lineEnd + 1);
-            cout << line << endl;
         }
     }
 };
