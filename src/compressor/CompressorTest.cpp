@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
         FileUtils::writeBytes(fileOutStream, encoded);
 
         int t1 = time(NULL);
-        printf("encoded size:%d original size:%d compression:%lf\n",
+        printf("encoded size:%lu original size:%lu compression:%lf\n",
                encoded.size(),
                inputVector.size(),
                double(encoded.size()) / inputVector.size());
@@ -65,11 +65,16 @@ int main(int argc, char *argv[]) {
         vector<char> encoded = compressor->encode(&inputVector[0], inputVector.size());
         vector<char> decoded = compressor->decode(&encoded[0], encoded.size());
 
+        //ofstream fileOutStream = ofstream(filename + ".myzip");
+        //FileUtils::writeBytes(fileOutStream, decoded);
+
         for (int i = 0; i < decoded.size(); i++) {
             assert(decoded[i] == inputVector[i]);
         }
 
-        printf("original size:%d decoded size:%d encoded size:%d\n", inputVector.size(), decoded.size(), encoded.size());
+        int t1 = time(NULL);
+        printf("original size:%lu decoded size:%lu encoded size:%lu compression rate:%lf time:%d\n",
+        inputVector.size(), decoded.size(), encoded.size(), encoded.size()/double(inputVector.size()), t1 - t0);
     } else {
         puts("invalid mode");
         return 1;

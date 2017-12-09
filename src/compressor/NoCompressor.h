@@ -12,12 +12,12 @@ using namespace std;
 class NoCompressor : public Compressor {
 public:
 
-    vector<char> encode(char *str, int strSize) override {
+    vector<char> encode(char *str, unsigned long strSize) override {
         vector<char> encoded(str, str + strSize);
         return encoded;
     }
 
-    vector<char> decode(char *encoded, int encodedSize) override {
+    vector<char> decode(char *encoded, unsigned long encodedSize) override {
       vector<char> decoded(encoded, encoded + encodedSize);
       return decoded;
     }

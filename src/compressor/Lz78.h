@@ -17,7 +17,7 @@ private:
 public:
     Lz78() {}
 
-    vector<char> encode(char *str, int strSize) override {
+    vector<char> encode(char *str, unsigned long strSize) override {
         vector<char> encoded;
         unordered_map<string, int> dict;
         deque <unordered_map<string, int>::iterator> dictPos;
@@ -28,7 +28,7 @@ public:
         //dictPos.push_back(dict.begin());
 
         string currentStr = "";
-        for (int i = 0; i < strSize; i++) {
+        for (unsigned long i = 0; i < strSize; i++) {
             currentStr.push_back(str[i]);
 
             if (dict.find(currentStr) == dict.end()) {
@@ -60,7 +60,7 @@ public:
         return encoded;
     }
 
-    vector<char> decode(char *encoded, int encodedSize) override {
+    vector<char> decode(char *encoded, unsigned long encodedSize) override {
         vector<char> decoded;
         string reverseDict[dictMaxSize];
 
@@ -68,7 +68,7 @@ public:
 
         int nextDictPos = 1;
 
-        for (int i = 0; i < encodedSize; i += 2) {
+        for (unsigned long i = 0; i < encodedSize; i += 2) {
             int dictPos = (unsigned char) encoded[i];
             char nextChar = encoded[i + 1];
 

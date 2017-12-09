@@ -19,11 +19,10 @@ private:
     deque<unsigned long> charStartPositions[ALPHABET_SIZE];
     unsigned long startPositionsBegin, startPositionsEnd;
 public:
-    vector<char> encode(char *str, int strSize) override {
-      //TODO: change to unsigned long
+    vector<char> encode(char *str, unsigned long strSize) override {
         vector<char> encoded;
 
-        int i = 0;
+        unsigned long i = 0;
         tuple<int, int, char> occurrence;
         while (i < strSize) {
             occurrence = prefixMatch(str, strSize, i);
@@ -42,19 +41,19 @@ public:
         return encoded;
     }
 
-    vector<char> decode(char *encoded, int encodedSize) override {
+    vector<char> decode(char *encoded, unsigned long encodedSize) override {
         vector<char> decoded;
 
-        int pos = 0;
-        for (int i = 0; i < encodedSize; i += 3) {
+        unsigned long pos = 0;
+        for (unsigned long i = 0; i < encodedSize; i += 3) {
             int firstByte = (unsigned char) encoded[i];
             int secondByte = (unsigned char) encoded[i + 1];
 
             int size = (unsigned char) secondByte & 0x000F;
-            int st = pos - (((unsigned char) firstByte << 4) | ((unsigned char) secondByte >> 4));
-            int en = st + size;
+            unsigned long st = pos - (((unsigned char) firstByte << 4) | ((unsigned char) secondByte >> 4));
+            unsigned long en = st + size;
 
-            for (int j = st; j < en; j++) {
+            for (unsigned long j = st; j < en; j++) {
                 decoded.push_back(decoded[j]);
             }
 
@@ -76,17 +75,16 @@ private:
         unsigned long bufferStart = lookStart > bufferMaxSize ? lookStart - bufferMaxSize : 0UL;
         unsigned long bufferEnd = lookStart;
 
-        int bufferSize = bufferEnd - bufferStart;
         int lookaheadSize = lookEnd - lookStart;
 
         updateCharStartPositions(str, bufferStart, bufferEnd);
 
         int biggestMatchSize = 0;
-        int biggestMatchPos = lookStart;
+        unsigned long biggestMatchPos = lookStart;
 
         deque <unsigned long> &d = charStartPositions[(unsigned char) str[lookStart]];
         for (int i = 0; i < int(d.size()); i++) {
-            int startPos = d[i];
+            unsigned long startPos = d[i];
             int size = 1;
             while (size < lookaheadSize && str[startPos + size] == str[lookStart + size]) {
               size++;
