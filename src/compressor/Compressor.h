@@ -11,7 +11,7 @@ using namespace std;
 class Compressor {
 
 public:
-    virtual vector<char> encode(char* str, int strSize) = 0;
-    virtual vector<char> decode(char* str, int strSize) = 0;
+    virtual vector<char> encode(char* str, unsigned long strSize) = 0;
+    virtual vector<char> decode(char* str, unsigned long strSize) = 0;
     virtual int getCompressorCode() = 0;
 };
