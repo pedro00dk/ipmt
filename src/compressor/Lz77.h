@@ -13,8 +13,8 @@ using namespace std;
 
 class Lz77 : public Compressor {
 private:
-    int bufferMaxSize = 4095;
-    int lookaheadMaxSize = 15;
+    int bufferMaxSize = 1023;
+    int lookaheadMaxSize = 63;
     vector<vector<int>> fsm;
 public:
     Lz77() {
@@ -28,11 +28,11 @@ public:
         tuple<int, int, char> occurrence;
         while (i < strSize) {
             occurrence = patternMatch(str, strSize, i);
-//            occurrence = prefixMatch(str, strSize, i);
+           // occurrence = prefixMatch(str, strSize, i);
             int matchPos = get<0>(occurrence);
             int matchSize = get<1>(occurrence);
-            char firstByte = (char) (matchPos >> 4);
-            char secondByte = (char) ((((0x000F & matchPos) << 4)) | matchSize);
+            char firstByte = (char) (matchPos >> 2);
+            char secondByte = (char) ((((3 & matchPos) << 6)) | matchSize);
 
             encoded.push_back(firstByte);
             encoded.push_back(secondByte);
@@ -52,8 +52,8 @@ public:
             int firstByte = (unsigned char) encoded[i];
             int secondByte = (unsigned char) encoded[i + 1];
 
-            int size = (unsigned char) secondByte & 0x000F;
-            int st = pos - (((unsigned char) firstByte << 4) | ((unsigned char) secondByte >> 4));
+            int size = (unsigned char) secondByte & (0x00FF >> 2);
+            int st = pos - (((unsigned char) firstByte << 2) | ((unsigned char) secondByte >> 6));
             int en = st + size;
 
             for (int j = st; j < en; j++) {
