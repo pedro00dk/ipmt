@@ -5,6 +5,7 @@
 #include "compressor/Lz77.h"
 #include "compressor/Lz78.h"
 #include "indexer/Indexer.h"
+#include "indexer/SuffixArray.h"
 #include "indexer/SuffixTree.h"
 #include "util/FileUtils.h"
 
@@ -15,6 +16,7 @@ int main(int argc, char **argv) {
 
     Indexer *indexer = nullptr;
     if (options.indexAlgorithm == "suffixtree") indexer = new SuffixTree();
+    if (options.indexAlgorithm == "suffixarray") indexer = new SuffixArray();
     else {
         cerr << "ERR: indexer not implemented" << endl;
         exit(1);
