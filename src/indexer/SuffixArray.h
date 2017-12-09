@@ -34,7 +34,7 @@ public:
             suffixes[i].rank[1] = ((i + 1) < chars.size()) ? (chars[i + 1]) : -1;
         }
 
-        int indices[chars.size()];
+        vector<int> indices(chars.size());
         sort(suffixes.begin(), suffixes.end(), compareLT);
 
 
