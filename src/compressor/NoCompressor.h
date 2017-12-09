@@ -9,8 +9,6 @@
 
 using namespace std;
 
-#define ALPHABET_SIZE UCHAR_MAX
-
 class NoCompressor : public Compressor {
 public:
 
