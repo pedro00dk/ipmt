@@ -45,7 +45,7 @@ class PlotUtils:
         ax.set_title(title)
 
         # Set the position of the x ticks
-        ax.set_xticks([p + 1.5 * width for p in positions])
+        ax.set_xticks([])
 
         # Setting the x-axis and y-axis limits
         plt.xlim(min(positions) - width, max(positions) + width * 4)
