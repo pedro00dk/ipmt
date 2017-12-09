@@ -61,7 +61,7 @@ public:
         if (verbose) cout << "Indexer finished - node count: " << nodeIdGenerator << endl;
     }
 
-    void search(const vector<string> &patterns, bool count, bool print) {
+    void search(const vector<string> &patterns, bool count, bool print) override {
         for (const string &pattern : patterns) {
             int patternSize = pattern.size();
 
