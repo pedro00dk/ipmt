@@ -47,9 +47,6 @@ class PlotUtils:
         # Set the position of the x ticks
         ax.set_xticks([p + 1.5 * width for p in positions])
 
-        # Set the labels for the x ticks
-        ax.set_xticklabels(plot_labels)
-
         # Setting the x-axis and y-axis limits
         plt.xlim(min(positions) - width, max(positions) + width * 4)
         plt.ylim([0, max(plot_values) * 1.1])
