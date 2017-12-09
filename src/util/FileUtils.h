@@ -18,4 +18,11 @@ public:
         fileStream.write(&bytes[0], bytes.size());
         fileStream.close();
     }
+
+    static void checkFile(ifstream &fileStream, string filename) {
+      if (!fileStream.is_open()) {
+          cerr << "ERR: can not open file " << filename << endl;
+          exit(1);
+      }
+    }
 };

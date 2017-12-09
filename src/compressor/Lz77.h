@@ -1,3 +1,5 @@
+#pragma once
+
 #include <tuple>
 #include <iostream>
 #include <fstream>
@@ -63,6 +65,10 @@ public:
         }
 
         return decoded;
+    }
+
+    int getCompressorCode() override {
+        return 77;
     }
 
 private:
