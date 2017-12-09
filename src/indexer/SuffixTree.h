@@ -112,6 +112,9 @@ public:
                  << "nodes: " << nodeIdGenerator << endl;
         vector<char> bytes;
 
+        bytes.push_back('t');
+        bytes.push_back('\n');
+
         int serializedNodesCount = 0;
         serializeNodes(root, bytes, &serializedNodesCount, verbose);
         if (verbose) cout << "\r   at: " << serializedNodesCount + 1 << endl;
@@ -131,11 +134,14 @@ public:
         stringstream stream;
         stream.write(&bytes[0], bytes.size());
 
+        string line;
+        getline(stream, line); // t
+
         std::map<int, Node *> nodes;
 
         bool inHeader = true;
         Node *currentNode = nullptr; // the root node is the last to be added (post order in serialize)
-        for (string line; getline(stream, line);) {
+        for (; getline(stream, line);) {
             if (inHeader) {
                 if (line.size() == 1) {
                     break;
