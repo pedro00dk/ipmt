@@ -24,6 +24,8 @@ public:
     vector<int> lcp;
 
     void buildIndex(const vector<char> &chars, bool verbose) override {
+        if (verbose) cout << "SUFFIX ARRAY Indexer" << endl << "size: " << chars.size() << endl;
+
         this->chars = chars;
         vector<Suffix> suffixes(chars.size());
         for (int i = 0; i < chars.size(); i++) {
@@ -35,7 +37,10 @@ public:
         int indices[chars.size()];
         sort(suffixes.begin(), suffixes.end(), compareLT);
 
+
         for (int k = 4; k < 2 * chars.size(); k *= 2) {
+            if (verbose) cout << "\r  at: " << k << flush;
+
             int rank = 0;
             int previousRank = suffixes[0].rank[0];
             suffixes[0].rank[0] = rank;
@@ -60,6 +65,9 @@ public:
 
             sort(suffixes.begin(), suffixes.end(), compareLT);
         }
+
+        if (verbose) cout << endl << "Indexer finished" << endl;
+
         suffixArray = vector<int>(chars.size());
         for (int i = 0; i < chars.size(); i++)
             suffixArray[i] = suffixes[i].index;
