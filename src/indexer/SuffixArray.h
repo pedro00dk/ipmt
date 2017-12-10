@@ -191,7 +191,8 @@ public:
             cout << "SUFFIX ARRAY Serializer" << endl << "size: " << chars.size() << endl;
 
         vector<char> bytes;
-
+        bytes.push_back('a');
+        bytes.push_back('\n');
         string size = to_string(chars.size()) + "\n";
         bytes.insert(end(bytes), begin(size), end(size));
 
@@ -226,6 +227,8 @@ public:
         stream.write(&bytes[0], bytes.size());
 
         string line;
+        getline(stream, line); // a
+
         getline(stream, line);
         int size = stoi(line);
         getline(stream, line); // =

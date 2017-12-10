@@ -8,18 +8,18 @@ from plot_utils import PlotUtils
 textfiles_dir = 'testFiles/'
 # textfiles_names = ['code.h', 'shakespeare.txt', 'html.html', 'bin.exe']
 # textfiles_names = ['code.h', 'html.html', 'bin.exe']
-textfiles_names = ['code.py']
+textfiles_names = ['xml01.txt', 'xml02.txt', 'xml05.txt', 'xml10.txt']
 cpp_compression_source = '../src/compressor/CompressorTest.cpp'
 cpp_ipmt_source = '../src/ipmt.cpp'
 compile_base_command = 'g++ -std=c++11 -O2 '
 run_base_command = './a.out '
 # run_base_command = 'a.exe '
 colors = ['#EE3224', '#F78F1E', '#FFC222', '#FFC222', '#FFC222', '#FFC222']
-num_of_runs = 10
+num_of_runs = 3
 
 compression_algorithms = ['uncompressed', 'lz77', 'lz78']
-index_algorithms = ['suffixtree']
-pattern_sizes = [5, 10]
+index_algorithms = ['suffixtree', 'suffixarray']
+pattern_sizes = [5]
 
 
 def run(command, print_output=True):
@@ -176,7 +176,7 @@ def plot_index_size():
 
         for compression_algorithm in compression_algorithms:
             for index_algorithm in index_algorithms:
-                index_command = "./a.out index %s --compression=%s --indextype=%s" % (textfile_path,
+                index_command = "./a.out index -v %s --compression=%s --indextype=%s" % (textfile_path,
                                                                                       compression_algorithm,
                                                                                       index_algorithm)
 
@@ -207,7 +207,7 @@ def plot_index_time():
 
         for compression_algorithm in compression_algorithms:
             for index_algorithm in index_algorithms:
-                index_command = "./a.out index %s --compression=%s --indextype=%s" % (textfile_path,
+                index_command = "./a.out index -v %s --compression=%s --indextype=%s" % (textfile_path,
                                                                                       compression_algorithm,
                                                                                       index_algorithm)
 
@@ -250,14 +250,14 @@ def plot_search_time():
             for compression_algorithm in compression_algorithms:
                 for index_algorithm in index_algorithms:
                     # index
-                    index_command = "./a.out index %s --compression=%s --indextype=%s " % (textfile_path,
+                    index_command = "./a.out index -v %s --compression=%s --indextype=%s " % (textfile_path,
                                                                                            compression_algorithm,
                                                                                            index_algorithm)
                     run(index_command, print_output=True)
 
                     # search
                     search_command = "./a.out search %s %s -c" % ('pattern', textfile_idx_path)
-                    # search_command = "./a.out search -p %s %s -c" % (patterns_path, textfile_idx_path)
+                    search_command = "./a.out search -c --compression=%s --indextype=%s -p %s %s" % (compression_algorithm, index_algorithm, patterns_path, textfile_idx_path)
 
                     r = functools.partial(run, search_command, print_output=True)
                     run_time = get_run_time(r, runs=num_of_runs)
