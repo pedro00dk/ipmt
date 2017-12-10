@@ -63,6 +63,10 @@ int main(int argc, char **argv) {
             } else {
                 indexBytes = fileBytes;
             }
+
+            if (indexBytes[0] == 'a') indexer = new SuffixArray();
+            else indexer = new SuffixTree();
+
             indexer->deserialize(indexBytes, options.verbose);
             indexer->search(options.patterns, options.count, !options.count);
         }
