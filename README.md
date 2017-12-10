@@ -14,7 +14,7 @@ IPMT é uma ferramenta para indexação, armazenagem e busca de padrões num arq
 
 ## Pré-requisitos
 
-Para executar a ferramente, é necessário que a máquina possua o compilador de C++11.
+Para executar a ferramenta, é necessário que a máquina possua o compilador de C++11.
 
 ## Setup
 
